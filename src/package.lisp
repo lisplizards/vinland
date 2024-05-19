@@ -18,13 +18,13 @@
            #:status-keyword-to-text
            #:status-text
            #:status-text-clack-response)
-  (:documentation "HTTP response related utilities"))
+  (:documentation "HTTP response related utilities."))
 
 (defpackage #:foo.lisp.vinland/params
   (:use #:cl)
   (:export #:validate-params
            #:%validate-params)
-  (:documentation "Used to validate request parameters; non-essential but can be used in route handlers"))
+  (:documentation "Package for validation of request parameters; non-essential but can be called from route handlers."))
 
 (defpackage #:foo.lisp.vinland/web
   (:use #:cl)
@@ -52,7 +52,8 @@
            #:csrf-token
            #:halt
            #:render)
-  (:export #:unauthorized-redirect-error
+  (:export #:redirect-not-allowed-error
+           #:unsafe-redirect-error
            #:double-render-error
            #:invalid-binding-error
            #:client-error
@@ -63,8 +64,7 @@
   (:export #:respond
            #:redirect
            #:redirect-back)
-  (:documentation "Helper utilities around LACK.REQUEST and LACK.RESPONSE, to be called within the context
-of route handlers"))
+  (:documentation "Exports macros and functions for HTTP related operations, intended to be called from route handlers."))
 
 (defpackage #:foo.lisp.vinland/handler/types
   (:use #:cl)
@@ -72,7 +72,8 @@ of route handlers"))
            #:string-list
            #:binding-alist
            #:cons-list
-           #:function-list))
+           #:function-list)
+  (:documentation "Types intended to be used from handler (sub-protocol) packages."))
 
 (defpackage #:foo.lisp.vinland/handler/simple
   (:use #:cl)
@@ -84,7 +85,7 @@ of route handlers"))
                 #:function-list)
   (:export #:route/simple
            #:define-controller)
-  (:documentation "Defines the \"simple\" sub-protocol (identifier symbol: ROUTE/SIMPLE)"))
+  (:documentation "Defines the \"simple\" handler sub-protocol (identifier symbol: ROUTE/SIMPLE)."))
 
 (defpackage #:foo.lisp.vinland
   (:use #:cl)
@@ -101,4 +102,4 @@ of route handlers"))
            #:*origin*
            #:*flash*)
   (:export #:route/simple)
-  (:documentation "Package for special variables and sub-protocol identifiers"))
+  (:documentation "Package that exports special variables and sub-protocol identifiers."))

@@ -22,7 +22,11 @@
   `(integer 500 599))
 
 (define-condition unknown-status-error (simple-error)
-  ((status :initarg :status)))
+  ((status :initarg :status))
+  (:report (lambda (condition stream)
+             (with-slots (status)
+                 condition
+               (format stream "Unknown status: ~A" status)))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *status-code-to-text* (make-hash-table))
@@ -99,35 +103,59 @@
       (setf (gethash code *status-code-to-text*) text)
       (setf (gethash code *status-code-to-keyword*) keyword)
       (setf (gethash keyword *status-keyword-to-code*) code)
-      (setf (gethash keyword *status-keyword-to-text*) text))))
+      (setf (gethash keyword *status-keyword-to-text*) text)))
+
+  (flet ((copy-hash-table (hash-table)
+           (let ((copy (make-hash-table :test #'eq
+                                        :size (hash-table-count hash-table)
+                                        :rehash-size 1
+                                        :rehash-threshold 0)))
+             (maphash #'(lambda (key value)
+                          (setf (gethash key copy) value))
+                      hash-table)
+             copy)))
+    (setq *status-code-to-text* (copy-hash-table *status-code-to-text*)
+          *status-code-to-keyword* (copy-hash-table *status-code-to-keyword*)
+          *status-keyword-to-code* (copy-hash-table *status-keyword-to-code*)
+          *status-keyword-to-text* (copy-hash-table *status-keyword-to-text*))))
 
 (defun status-code-to-keyword (status)
-  (declare (type integer keyword))
+  "Translates STATUS, an HTTP response status code (integer) to a keyword."
+  (declare (type integer status))
   (or (gethash status *status-code-to-keyword*)
       (signal 'unknown-status-error :status status)))
 
 (defun status-code-to-text (status)
+  "Translates STATUS, an HTTP response status code (integer) to a string."
   (declare (type integer status))
   (or (gethash status *status-code-to-text*)
       (signal 'unknown-status-error :status status)))
 
 (defun status-keyword-to-code (status)
-  (declare (type status keyword))
+  "Translates STATUS, a keyword representing an HTTP response status code,
+to the actual HTTP response status code integer."
+  (declare (type keyword status))
   (or (gethash status *status-keyword-to-code*)
       (signal 'unknown-status-error :status status)))
 
 (defun status-keyword-to-text (status)
+  "Translates STATUS, a keyword representing an HTTP response status code,
+to a string."
   (declare (type keyword status))
-  (or (gethash status *status-code-to-text*)
+  (or (gethash status *status-keyword-to-text*)
       (signal 'unknown-status-error :status status)))
 
 (defun status-text (status)
+  "Translates STATUS, either an integer or keyword representing an HTTP response
+status code, to a string."
   (declare (type (or integer keyword) status))
   (etypecase status
     (keyword (format nil "~A" (status-keyword-to-text status)))
     (integer (format nil "~A" (status-code-to-text status)))))
 
 (defun status-text-clack-response (status)
+  "Returns a Clack response list for STATUS, either an integer or keyword
+representing an HTTP response status code."
   (declare (type (or integer keyword) status))
   (let* ((code (etypecase status
                  (integer status)

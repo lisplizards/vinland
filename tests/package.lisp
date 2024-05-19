@@ -3,5 +3,11 @@
 
 (in-package #:cl-user)
 
-(defpackage #:foo.lisp.vinland/tests
+(defpackage #:foo.lisp.vinland/tests/response
+  (:use #:cl #:rove))
+
+(defpackage #:foo.lisp.vinland/tests/params
+  (:use #:cl #:rove))
+
+(defpackage #:foo.lisp.vinland/tests/web
   (:use #:cl #:rove))

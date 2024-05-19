@@ -22,6 +22,7 @@
   (connect nil :type (or null function)))
 
 (defun define-controller (sym &rest kwargs &key &allow-other-keys)
+  "Defines a Raven route handler for the sub-protocol identified by FOO.LISP.VINLAND:ROUTE/SIMPLE."
   (apply #'foo.lisp.raven:define-route sym :meta 'foo.lisp.vinland:route/simple kwargs))
 
 (defmethod foo.lisp.raven:%make-route-metadata ((metadata (eql 'route/simple))
@@ -107,9 +108,9 @@
              (list env))
     #1=(block nil
          (let ((foo.lisp.vinland:*request* (foo.lisp.lack/request:make-request env))
-               (foo.lisp.vinland:*response* (lack.response:make-response 200 ())))
-           (declare (type lack.request:request foo.lisp.vinland:*request*)
-                    (type lack.response:response foo.lisp.vinland:*response*))
+               (foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
+           (declare (type lack/request:request foo.lisp.vinland:*request*)
+                    (type lack/response:response foo.lisp.vinland:*response*))
            (let ((request-uri (lack/request:request-uri foo.lisp.vinland:*request*)))
              (declare (type string request-uri))
              (and (route/simple-max-uri-length metadata)
@@ -169,7 +170,7 @@
                                     (declare (type string media-type-str))
                                     (lack/request:request-accepts-p foo.lisp.vinland:*request*
                                                                     media-type-str))
-                                (route/simple-provide metadata))
+                                  (route/simple-provide metadata))
                     (return
                       `(406
                         (:content-type "text/plain"
@@ -189,7 +190,7 @@
                                            (lack/media-type:match-media-type (lack/media-type:make-media-type
                                                                               media-type-str)
                                                                              content-media-type))
-                                       (route/simple-accept metadata)))
+                                         (route/simple-accept metadata)))
                       (return
                         `(415
                           (:content-type "text/plain"
@@ -222,7 +223,18 @@
                        ("Bad Request")))))
                (let ((foo.lisp.vinland:*route* route-name)
                      (foo.lisp.vinland:*binding* (getf env :raven.binding))
-                     (foo.lisp.vinland:*origin* (format nil "~A:~A" (getf env :url-scheme) (getf env :server)))
+                     (foo.lisp.vinland:*origin*
+                       (let ((uri-scheme (lack/request:request-uri-scheme foo.lisp.vinland:*request*))
+                             (server-name (lack/request:request-server-name foo.lisp.vinland:*request*))
+                             (server-port (lack/request:request-server-port foo.lisp.vinland:*request*)))
+                         (declare (type (simple-array character (*)) uri-scheme server-name)
+                                  (type integer server-port))
+                         (or (case server-port
+                               (80 (and (string= "http" uri-scheme)
+                                        (format nil "~A://~A" uri-scheme server-name)))
+                               (443 (and (string= "https" uri-scheme)
+                                         (format nil "~A://~A" uri-scheme server-name))))
+                             (format nil "~A://~A:~D" uri-scheme server-name server-port))))
                      (metadata-before (route/simple-before metadata))
                      (metadata-after (route/simple-after metadata)))
                  (declare (type symbol foo.lisp.vinland:*route*)
@@ -230,16 +242,14 @@
                           (type string foo.lisp.vinland:*origin*)
                           (type function-list metadata-before metadata-after))
                  (let ((result (handler-case (catch 'foo.lisp.vinland/web:halt
-                                               (let (result)
-                                                 (unwind-protect (progn
-                                                                   (dolist (before metadata-before)
-                                                                     (declare (type function before))
-                                                                     (funcall before))
-                                                                   (setf result (funcall handler)))
-                                                   (dolist (after metadata-after)
-                                                     (declare (type function after))
-                                                     (funcall after)))
-                                                 result))
+                                               (unwind-protect (progn
+                                                                 (dolist (before metadata-before)
+                                                                   (declare (type function before))
+                                                                   (funcall before))
+                                                                 (funcall handler))
+                                                 (dolist (after metadata-after)
+                                                   (declare (type function after))
+                                                   (funcall after))))
                                  (foo.lisp.vinland/web:client-error (condition)
                                    (return
                                      (foo.lisp.vinland/response:status-text-clack-response
@@ -250,25 +260,25 @@
                                       (slot-value condition 'foo.lisp.vinland/web::status)))))))
                    (etypecase result
                      (null
-                      (lack.response:finalize-response foo.lisp.vinland:*response*))
+                      (lack/response:finalize-response foo.lisp.vinland:*response*))
                      (list
-                      (and (lack.response:response-body foo.lisp.vinland:*response*)
+                      (and (lack/response:response-body foo.lisp.vinland:*response*)
                            (error 'foo.lisp.vinland/web:double-render-error))
                       result)
                      (string
-                      (and (lack.response:response-body foo.lisp.vinland:*response*)
+                      (and (lack/response:response-body foo.lisp.vinland:*response*)
                            (error 'foo.lisp.vinland/web:double-render-error))
-                      (setf (lack.response:response-body foo.lisp.vinland:*response*)
+                      (setf (lack/response:response-body foo.lisp.vinland:*response*)
                             result)
-                      (lack.response:finalize-response foo.lisp.vinland:*response*))
+                      (lack/response:finalize-response foo.lisp.vinland:*response*))
                      ((vector (unsigned-byte 8))
-                      (and (lack.response:response-body foo.lisp.vinland:*response*)
+                      (and (lack/response:response-body foo.lisp.vinland:*response*)
                            (error 'foo.lisp.vinland/web:double-render-error))
-                      (setf (lack.response:response-body foo.lisp.vinland:*response*)
+                      (setf (lack/response:response-body foo.lisp.vinland:*response*)
                             result)
-                      (lack.response:finalize-response foo.lisp.vinland:*response*))
+                      (lack/response:finalize-response foo.lisp.vinland:*response*))
                      (function
-                      (and (lack.response:response-body foo.lisp.vinland:*response*)
+                      (and (lack/response:response-body foo.lisp.vinland:*response*)
                            (error 'foo.lisp.vinland/web:double-render-error))
                       result)))))))))
 
@@ -283,4 +293,4 @@
 
   #-ecl
   (fast-generic-functions:seal-domain #'foo.lisp.raven:%handle-request/fast
-                                      '(route/simple symbol list)))
+                                        '(route/simple symbol list)))
