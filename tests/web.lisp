@@ -319,6 +319,8 @@
      (ok (null (foo.lisp.vinland/web:delete-cookie "_foo")))
      (ok (equal `("_foo" (:value ""
                           :path "/"
+                          :secure nil
+                          :samesite :strict
                           :expires 2208988800))
                 (lack/response:response-set-cookies foo.lisp.vinland:*response*))))))
 
