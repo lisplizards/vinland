@@ -426,18 +426,15 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
           (check-type status-code
                       foo.lisp.vinland/response:status-code-redirect)
           status-code))
-  (unless (equal #\/ (char location 0))
-    (let ((location-host (multiple-value-bind (scheme userinfo host port path query fragment)
-                             (quri:parse-uri location)
-                           (declare (ignore scheme userinfo port path query fragment))
-                           host)))
-      (declare (type string location-host))
-      (when (and (null allow-other-host)
-                 (not (equal location-host
-                             (lack/request:request-server-name foo.lisp.vinland:*request*))))
-        (signal 'unsafe-redirect-error
-                :origin foo.lisp.vinland:*origin*
-                :location location))))
+  (let ((location-host (quri:uri-host (quri:uri location))))
+    (declare (type (or null string)))
+    (and location-host
+         (null allow-other-host)
+         (not (equal location-host
+                     (lack/request:request-server-name foo.lisp.vinland:*request*)))
+         (signal 'unsafe-redirect-error
+                 :origin foo.lisp.vinland:*origin*
+                 :location location)))
   (setf (lack/response:response-headers foo.lisp.vinland:*response*)
         (append (lack/response:response-headers foo.lisp.vinland:*response*)
                 (append headers (list :location location))))
@@ -495,18 +492,15 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
                        default-location)))
     (declare (type (or null simple-string) referrer)
              (type string location))
-    (unless (char= #\/ (char location 0))
-      (let* ((location-host (multiple-value-bind (scheme userinfo host port path query fragment)
-                                (quri:parse-uri location)
-                              (declare (ignore scheme userinfo port path query fragment))
-                              host)))
-        (declare (type string location-host))
-        (when (and (null allow-other-host)
-                   (not (equal location-host
-                               (lack/request:request-server-name foo.lisp.vinland:*request*))))
-          (signal 'unsafe-redirect-error
-                  :origin foo.lisp.vinland:*origin*
-                  :location location))))
+    (let ((location-host (quri:uri-host (quri:uri location))))
+      (declare (type (or null string)))
+      (and location-host
+           (null allow-other-host)
+           (not (equal location-host
+                       (lack/request:request-server-name foo.lisp.vinland:*request*)))
+           (signal 'unsafe-redirect-error
+                   :origin foo.lisp.vinland:*origin*
+                   :location location)))
     (setf (lack/response:response-headers foo.lisp.vinland:*response*)
           (append (lack/response:response-headers
                    foo.lisp.vinland:*response*)

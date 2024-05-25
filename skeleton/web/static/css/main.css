@@ -1,0 +1,116 @@
+*, *:before, *::before, *:after, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --text-color: var(--sl-color-gray-700);
+  --link-color: var(--sl-color-gray-700);
+}
+
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: --var(text-color);
+  background-color: #ffffff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  color: var(--link-color);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-container {
+  flex: 1;
+}
+
+.main-container.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.hidden {
+  display: none;
+}
+
+<%- @unless skip-flash %>
+/*
+ * NOTE: .fadein is used to delay the visibility of the default demo-app flash message
+ * while shoelace components load. .fadein and the fadein keyframe can be safely removed.
+ */
+
+.fadein {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 1s ease-in-out;
+  animation: fadein 3s forwards;
+}
+
+@keyframes fadein {
+  0% {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  33.33% {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  100% {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+<%- @endunless %>
+header {
+  text-align: center;
+}
+
+footer {
+  text-align: center;
+}
+
+button {
+  padding: 0.5rem;
+}
+
+header a,
+footer a {
+  text-decoration: none;
+}
+
+.lisp-lizard-logo {
+  max-width: 20rem;
+}
+
+sl-button[variant="primary"] {
+  width: 100%;
+}
+
+.flash-container {
+  margin-bottom: 1rem;
+  min-height: 4.5rem;
+}
+
+@media (min-width: 30rem) {
+  body {
+    margin: 0 auto;
+  }
+}
