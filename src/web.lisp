@@ -179,6 +179,8 @@ header to the response with the same name but with an expiration in the
 past, at UNIX epoch. Returns NIL; a macro."
   `(set-cookies (list (cons ,name (list :value ""
                                         :path "/"
+                                        :secure nil
+                                        :samesite :strict
                                         :expires 2208988800)))))
 
 (defmacro set-session-options (options-plist)

@@ -20,6 +20,18 @@ See [vinland-todo-app](https://github.com/lisplizards/vinland-todo-app) for an e
 
 Not in Quicklisp, so clone the repository to "local-projects/".
 
+## Dependencies
+
+* [foo.lisp.lack-middleware-flash](https://github.com/lisplizards/lack-middleware-flash)
+* [foo.lisp.lack-request](https://github.com/lisplizards/lack-request)
+* [foo.lisp.params](https://github.com/lisplizards/params)
+* [foo.lisp.raven](https://github.com/lisplizards/raven)
+* [foo.lisp.resource](https://github.com/lisplizards/resource)
+* [foo.lisp.lack-session-store-redis-pool](https://github.com/lisplizards/lack-session-store-redis-pool)
+* [lack-middleware-csrf](https://github.com/fukamachi/lack/blob/master/lack-middleware-csrf.asd)
+* [lack-response](https://github.com/fukamachi/lack/blob/master/lack-response.asd)
+* [uiop](https://gitlab.common-lisp.net/asdf/asdf/-/tree/master/uiop)
+
 ## Contributing
 
 Open an Issue or Pull Request on GitHub.

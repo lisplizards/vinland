@@ -1,3 +1,14 @@
+## [1.2.0] - 2024-05-25
+### Changed
+* Bugfixes:
+  * Resolve warning from Lack session by specifying Samesite
+    attribute when setting cookie from DELETE-COOKIE
+
+* Misc:
+  * Add dependency: foo.lisp.lack-session-store-redis-pool
+    - add handler-case clause for REDIS-POOL-TIMEOUT-ERROR
+  * Specify dependencies in README
+
 ## [1.1.0] - 2024-05-19
 ### Changed
 * Bugfixes:
@@ -32,6 +43,8 @@
 - Add response utilities
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
+
+[1.2.0] https://github.com/lisplizards/vinland/compare/v1.1.0...v1.2.0
 
 [1.1.0] https://github.com/lisplizards/vinland/compare/v1.0.0...v1.1.0
 

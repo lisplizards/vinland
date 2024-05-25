@@ -10,6 +10,7 @@
   :source-control (:git "https://github.com/lisplizards/vinland.git")
   :depends-on ("foo.lisp.lack-middleware-flash"
                "foo.lisp.lack-request"
+               "foo.lisp.lack-session-store-redis-pool"
                "foo.lisp.params"
                "foo.lisp.raven"
                "foo.lisp.resource"

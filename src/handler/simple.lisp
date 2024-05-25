@@ -257,7 +257,14 @@
                                  (foo.lisp.vinland/web:server-error (condition)
                                    (return
                                      (foo.lisp.vinland/response:status-text-clack-response
-                                      (slot-value condition 'foo.lisp.vinland/web::status)))))))
+                                      (slot-value condition 'foo.lisp.vinland/web::status))))
+                                 (lack/middleware/session/store/redis-pool:redis-pool-timeout-error (condition)
+                                   (declare (ignore condition))
+                                   (return
+                                     `(503
+                                       (:content-type "text/plain"
+                                        :content-length 19)
+                                       ("Service Unavailable")))))))
                    (etypecase result
                      (null
                       (lack/response:finalize-response foo.lisp.vinland:*response*))

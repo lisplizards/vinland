@@ -221,8 +221,7 @@
                                         :headers ,(make-hash-table :test #'equal))))
          (foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
      (ok (null (foo.lisp.vinland/web:set-response-status :no-content)))
-     (ok (= 204 (lack/response:response-status foo.lisp.vinland:*response*)))
-     ))
+     (ok (= 204 (lack/response:response-status foo.lisp.vinland:*response*)))))
 
   (testing
    "signals REDIRECT-NOT-ALLOWED-ERROR when given a redirect (3xx) response status code"
