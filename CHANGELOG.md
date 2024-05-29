@@ -1,3 +1,14 @@
+## [1.3.0] - 2024-05-28
+### Changed
+* Features:
+  * add project skeleton, web and api flavors
+
+* Misc:
+  * Remove handler clause for redis-pool-timeout-error
+    - move redis-pool dependency to skeleton
+  * Simplify logic to check request host from redirects
+  * Update README.md
+
 ## [1.2.0] - 2024-05-25
 ### Changed
 * Bugfixes:
