@@ -109,6 +109,12 @@ Run tests:
 * [lack-response](https://github.com/fukamachi/lack/blob/master/lack-response.asd)
 * [uiop](https://gitlab.common-lisp.net/asdf/asdf/-/tree/master/uiop)
 
+### Test dependencies
+
+* [alexandria](https://gitlab.common-lisp.net/alexandria/alexandria)
+* [jonathan](https://github.com/rudolph-miller/jonathan)
+* [rove](https://github.com/fukamachi/rove)
+
 ## Contributing
 
 Open an Issue or Pull Request on GitHub.
