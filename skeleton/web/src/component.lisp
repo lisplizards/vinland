@@ -1,5 +1,13 @@
 (in-package #:<% @var name %>/component)
 
+(defun csrf-input ()
+  (spinneret:with-html
+      (:input :type "hidden"
+              :class "hidden"
+              :autocomplete "off"
+              :name lack/middleware/csrf::*csrf-middleware-token*
+              :value (foo.lisp.vinland/web:csrf-token))))
+
 (defun flash-container (&key (flash-types '(:notice :success :alert :error))
                           (class ""))
   (unless foo.lisp.vinland:*flash*
@@ -80,14 +88,6 @@
                       (:sl-icon :slot "icon" :name "exclamation-octagon")
                       (message)))))))
 <%- @endif %>
-
-(defun csrf-input ()
-  (spinneret:with-html
-      (:input :type "hidden"
-              :class "hidden"
-              :autocomplete "off"
-              :name lack/middleware/csrf::*csrf-middleware-token*
-              :value (foo.lisp.vinland/web:csrf-token))))
 
 (defun site-header ()
   (spinneret:with-html

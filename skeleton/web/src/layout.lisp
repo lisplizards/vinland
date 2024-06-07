@@ -5,6 +5,7 @@
 (defmacro with-main-layout ((&key title
                                links
                                scripts
+                               skip-main-js
                                main-container-class)
                             &body body)
   `(spinneret:with-html-string (:doctype)
@@ -42,7 +43,8 @@
                 :src "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"
                 :async t)
        <%- @endunless %>
-       (:script :type "module" :src "/js/main.js")
+       ,(unless skip-main-js
+          '(:script :type "module" :src "/js/main.js"))
        ,@(when scripts
            (loop for script in scripts
                  collect script)))

@@ -1,1 +1,1 @@
-(in-package #:<% @var name %>/tests/web)
+(in-package #:<% @var name %>/web/tests)

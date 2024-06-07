@@ -35,9 +35,11 @@
   :depends-on ("cl-jschema"
                "clingon"
                "com.inuoe.jzon"
+               "foo.lisp.lack-middleware-debug"
+               "foo.lisp.lack-middleware-errors"
                "foo.lisp.lack-middleware-head"
                "foo.lisp.lack-middleware-http-methods"
-               "foo.lisp.lack-middleware-postmodern"
+               "foo.lisp.lack-middleware-redact"
                "foo.lisp.lack-middleware-redis"
                "foo.lisp.lack-middleware-request-id"
                "foo.lisp.lack-middleware-user"
@@ -53,13 +55,14 @@
   :components ((:module "src"
                 :components
                 ((:file "cli" :depends-on ("app"))
-                 (:file "app" :depends-on ("web"))
+                 (:file "app" :depends-on ("http-error" "web"))
                  (:file "web" :depends-on ("controller" "params"))
                  (:file "params" :depends-on ("controller"))
                  (:file "controller" :depends-on ("json" "store" "user"))
                  (:file "user" :depends-on ("store"))
                  (:file "store" :depends-on ("dao"))
                  (:file "json" :depends-on ("dao"))
+                 (:file "http-error" :depends-on ("config"))
                  (:file "dao" :depends-on ("config"))
                  (:file "config" :depends-on ("package"))
                  (:file "package"))))
@@ -99,6 +102,7 @@
                  (:file "user" :depends-on ("package"))
                  (:file "store" :depends-on ("package"))
                  (:file "json" :depends-on ("package"))
+                 (:file "http-error" :depends-on ("package"))
                  (:file "dao" :depends-on ("package"))
                  (:file "config" :depends-on ("package"))
                  (:file "package"))))
@@ -112,6 +116,7 @@
                       (symbol-call :parachute :test :<% @var name %>/config)
                       (symbol-call :parachute :test :<% @var name %>/dao)
                       (symbol-call :parachute :test :<% @var name %>/json)
+                      (symbol-call :parachute :test :<% @var name %>/http-error)
                       (symbol-call :parachute :test :<% @var name %>/store)
                       (symbol-call :parachute :test :<% @var name %>/user)
                       (symbol-call :parachute :test :<% @var name %>/controller)

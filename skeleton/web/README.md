@@ -37,7 +37,7 @@ Start server:
 ```common-lisp
 (ql:quickload '("<% @var name %>" "clack"))
 
-(clack:clackup <% @var name %>/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil)
+(clack:clackup <% @var name %>/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil :debug nil)
 ```
 
 Run tests:
@@ -45,6 +45,54 @@ Run tests:
 ```common-lisp
 (asdf:test-system :<% @var name %>)
 ```
+
+## Dependencies
+
+* [clingon](https://github.com/dnaeon/clingon)
+* [com.inuoe.jzon](https://github.com/Zulu-Inuoe/jzon)
+* [foo.lisp.lack-middleware-charset](https://github.com/lisplizards/lack-middleware-charset)
+* [foo.lisp.lack-middleware-debug](https://github.com/lisplizards/lack-middleware-debug)
+* [foo.lisp.lack-middleware-errors](https://github.com/lisplizards/lack-middleware-errors)
+* [foo.lisp.lack-middleware-head](https://github.com/lisplizards/lack-middleware-head)
+* [foo.lisp.lack-middleware-http-methods](https://github.com/lisplizards/lack-middleware-http-methods)
+* [foo.lisp.lack-middleware-redis](https://github.com/lisplizards/lack-middleware-redis)
+* [foo.lisp.lack-middleware-request-id](https://github.com/lisplizards/lack-middleware-request-id)
+* [foo.lisp.lack-middleware-security-headers](https://github.com/lisplizards/lack-middleware-security-headers)
+* [foo.lisp.lack-middleware-user](https://github.com/lisplizards/lack-middleware-user)
+<%- @if session-store-redis-pool %>
+* [foo.lisp.lack-session-store-redis-pool](https://github.com/lisplizards/lack-session-store-redis-pool)
+<%- @endif %>
+* [foo.lisp.vinland](https://github.com/lisplizards/vinland)
+* [frugal-uuid](https://github.com/ak-coram/cl-frugal-uuid)
+* [lack](https://github.com/fukamachi/lack/blob/master/lack.asd)
+* [lack-middleware-backtrace](https://github.com/fukamachi/lack/blob/master/lack-middleware-backtrace.asd)
+* [lack-middleware-session](https://github.com/fukamachi/lack/blob/master/lack-middleware-session.asd)
+* [lack-middleware-static](https://github.com/fukamachi/lack/blob/master/lack-middleware-static.asd)
+* [local-time](https://github.com/dlowe-net/local-time)
+* [make-hash](https://github.com/genovese/make-hash)
+* [safety-params](https://github.com/fukamachi/safety-params)
+* [spinneret](https://github.com/ruricolist/spinneret)
+* [trivia](https://github.com/guicho271828/trivia)
+* [woo](https://github.com/fukamachi/woo)
+
+### Tests
+
+<%- @if parachute %>
+* [parachute](https://github.com/Shinmera/parachute)
+<%- @endif %>
+<%- @if rove %>
+* [rove](https://github.com/fukamachi/rove)
+<%- @endif %>
+
+### JavaScript
+
+<%- @unless skip-hotwire %>
+* [Turbo](https://github.com/hotwired/turbo)
+* [Stimulus](https://github.com/hotwired/stimulus)
+<%- @endunless %>
+<%- @unless skip-shoelace %>
+* [Shoelace](https://shoelace.style/)
+<%- @endunless %>
 
 <%- @if author %>
 ## Author

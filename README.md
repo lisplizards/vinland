@@ -106,6 +106,8 @@ Run tests:
 * [foo.lisp.raven](https://github.com/lisplizards/raven)
 * [foo.lisp.resource](https://github.com/lisplizards/resource)
 * [lack-middleware-csrf](https://github.com/fukamachi/lack/blob/master/lack-middleware-csrf.asd)
+* [lack-app-file](https://github.com/fukamachi/lack/blob/master/lack-app-file.asd)
+* [lack-component](https://github.com/fukamachi/lack/blob/master/lack-component.asd)
 * [lack-response](https://github.com/fukamachi/lack/blob/master/lack-response.asd)
 * [uiop](https://gitlab.common-lisp.net/asdf/asdf/-/tree/master/uiop)
 

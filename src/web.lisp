@@ -62,15 +62,16 @@ See FOO.LISP.PARAMS:COLLECT-NESTED-PARAMS for more specifics."
     ,key-list))
 
 (defmacro negotiate (&body clauses)
-  "CASE-like macro to perform content negotiation based on the request
+  "CASE/COND-like macro to perform content negotiation based on the request
 Accept header.
 
-For each clause starting with a media-type string, checks whether the
-media-type matches a value from the request Accept header, returning the
-clause body when there is a match. When no media-type clause matches the
-request Accept header and a final clause is present, returns the fallback
-clause body; when no fallback clause is present, signals a CLIENT-ERROR
-with status 406: Not Acceptable."
+Iterates across each media-type specied in the request Accept header,
+for each iteration checking whether any clause is defined that starts
+with the given media-type, returning the clause body when there is a match.
+
+When no media-type clause matches the request Accept header and a final clause
+is present, returns the fallback clause body; when no fallback clause is present,
+signals a CLIENT-ERROR with status 406: Not Acceptable."
   (let ((gensym-negotiate (gensym "negotiate"))
         (gensym-request-accept (gensym "request-accept"))
         (clauses clauses))
@@ -80,7 +81,7 @@ with status 406: Not Acceptable."
                                  (gensym "media-type"))
                                clauses))
           (fallback-body (when (symbolp (caar (last clauses))) (cdar (last clauses)))))
-      `(block ,gensym-negotiate
+      `(catch ',gensym-negotiate
          (dolist (,gensym-request-accept (lack/request:request-accept foo.lisp.vinland:*request*))
            ,@(loop for clause in clauses
                    for gensym-media-type in media-type-gensyms
@@ -89,12 +90,12 @@ with status 406: Not Acceptable."
                                       (lack/media-type:make-media-type ,(car clause))))
                                 (when (lack/media-type:match-media-type ,gensym-request-accept
                                                                         ,gensym-media-type)
-                                  (return-from ,gensym-negotiate
+                                  (throw ',gensym-negotiate
                                     (progn
                                       ,@(cdr clause)))))))
          ,@(if fallback-body
                `((progn ,@fallback-body))
-               '((signal 'foo.lisp.vinland/web:client-error :status 406)))))))
+               '((error 'foo.lisp.vinland/web:client-error :status-code 406)))))))
 
 (defmacro set-response-status (status)
   "Sets the HTTP response status code, an integer or keyword.
@@ -110,15 +111,15 @@ or REDIRECT-BACK."
         (gensym-status-code (gensym "status-code")))
     `(let* ((,gensym-status ,status)
             (,gensym-status-code (etypecase ,gensym-status
-                                   (keyword (foo.lisp.vinland/response:status-keyword-to-code
+                                   (keyword (foo.lisp.http-response:status-keyword-to-code
                                              ,gensym-status))
                                    (integer ,gensym-status))))
        (when (typep ,gensym-status-code
-                    'foo.lisp.vinland/response:status-code-redirect)
-         (signal 'foo.lisp.vinland/web:redirect-not-allowed-error
-                  :status-code ,gensym-status-code
-                  :location (getf (lack/response:response-headers foo.lisp.vinland:*response*)
-                                  :location)))
+                    'foo.lisp.http-response:status-code-redirect)
+         (error 'foo.lisp.vinland/web:redirect-not-allowed-error
+                 :status-code ,gensym-status-code
+                 :location (getf (lack/response:response-headers foo.lisp.vinland:*response*)
+                                 :location)))
        (setf (lack/response:response-status foo.lisp.vinland:*response*)
              ,gensym-status-code)
        (values))))
@@ -148,7 +149,7 @@ Note that case of the dynamic path component name is preserved in the keyword."
   (let ((gensym-binding-name (gensym "binding-name")))
     `(let ((,gensym-binding-name ,name))
        (or (cdr (assoc ,gensym-binding-name foo.lisp.vinland:*binding* :test #'eq))
-           (signal 'foo.lisp.vinland/web:invalid-binding-error :name ,gensym-binding-name)))))
+           (error 'foo.lisp.vinland/web:invalid-binding-error :name ,gensym-binding-name)))))
 
 (defmacro cookie (cookie-name)
   "Looks up the the cookie identified by COOKIE-NAME in the request Cookie
@@ -246,10 +247,10 @@ to a known HTTP response status code.
 
 Signals TYPE-ERROR when given a non-4xx HTTP response status."
   (let ((status-code (etypecase status
-                       (keyword (foo.lisp.vinland/response:status-keyword-to-code status))
+                       (keyword (foo.lisp.http-response:status-keyword-to-code status))
                        (integer status))))
-    (check-type status-code foo.lisp.vinland/response:status-code-client-error)
-    `(signal 'foo.lisp.vinland/web:client-error :status ,status-code)))
+    (check-type status-code foo.lisp.http-response:status-code-client-error)
+    `(error 'foo.lisp.http-response:client-error :status-code ,status-code)))
 
 (defmacro server-error (status)
   "Signals CLIENT-ERROR with STATUS, an integer or keyword representing
@@ -260,10 +261,10 @@ to a known HTTP response status code.
 
 Signals TYPE-ERROR when given a non-5xx HTTP response status."
   (let ((status-code (etypecase status
-                       (keyword (foo.lisp.vinland/response:status-keyword-to-code status))
+                       (keyword (foo.lisp.http-response:status-keyword-to-code status))
                        (integer status))))
-    (check-type status-code foo.lisp.vinland/response:status-code-server-error)
-    `(signal 'foo.lisp.vinland/web:server-error :status ,status-code)))
+    (check-type status-code foo.lisp.http-response:status-code-server-error)
+    `(error 'foo.lisp.http-response:server-error :status-code ,status-code)))
 
 (defmacro html-safe (html)
   "Returns an HTML-SAFE instance that contains HTML, a string. Used to
@@ -281,9 +282,9 @@ the result of calling function VIEW with arguments ARGS. Returns NIL; a macro.
 Signals UNSAFE-REDIRECT-ERROR when given a redirect (3xx) response code, as
 redirects should be performed with either REDIRECT or REDIRECT-BACK."
   (let ((status-code (etypecase status
-                       (keyword (foo.lisp.vinland/response:status-keyword-to-code status))
+                       (keyword (foo.lisp.http-response:status-keyword-to-code status))
                        (integer status))))
-    (check-type status-code foo.lisp.vinland/response:status-code)
+    (check-type status-code foo.lisp.http-response:status-code)
     `(foo.lisp.vinland/web:respond :status ,status-code
                                    :headers ,headers
                                    :render #'(lambda () (apply ,view ,args)))))
@@ -305,7 +306,7 @@ or macro that does not provide mitigation against Open Redirect attacks. Redirec
 
 (define-condition unsafe-redirect-error (simple-error)
   ((status-code :initarg :status-code
-                :type foo.lisp.vinland/response:status-code-redirect)
+                :type foo.lisp.http-response:status-code-redirect)
    (location :initarg :location)
    (origin :initarg :origin))
   (:report (lambda (condition stream)
@@ -333,24 +334,8 @@ location is provided by user input."))
   (:documentation "Error signalled when attempting to look up the value for a dynamic
 path component that does not exist in the route pattern for the current URL."))
 
-(define-condition client-error (simple-error)
-  ((status :initarg :status
-           :type foo.lisp.vinland/response:status-code-client-error))
-  (:report (lambda (condition stream)
-             (with-slots (status) condition
-               (format stream "Client error: ~A" status))))
-  (:documentation "Error signalled in order to reply with a 4xx HTTP client error response"))
-
-(define-condition server-error (simple-error)
-  ((status :initarg :status
-           :type foo.lisp.vinland/response:status-code-server-error))
-  (:report (lambda (condition stream)
-             (with-slots (status) condition
-               (format stream "Server error: ~A" status))))
-  (:documentation "Error signalled in order to reply with a 5xx HTTP server error response"))
-
 (defstruct html-safe "Box for trusted HTML content"
-  (value "" :type string))
+           (value "" :type string))
 
 (defun respond (&key (status 200) render headers)
   "Sets the response status code based on STATUS (integer or keyword),
@@ -376,17 +361,18 @@ as redirects should be performed with either REDIRECT or REDIRECT-BACK."
   (setf (lack/response:response-status foo.lisp.vinland:*response*)
         (let ((status-code
                 (etypecase status
-                  (keyword (foo.lisp.vinland/response:status-keyword-to-code
+                  (keyword (foo.lisp.http-response:status-keyword-to-code
                             status))
                   (integer status))))
-          (when (typep status-code
-                       'foo.lisp.vinland/response:status-code-redirect)
-            (signal 'redirect-not-allowed-error
-                     :status-code status-code
-                     :location (getf (lack/response:response-headers
-                                      foo.lisp.vinland:*response*)
-                                     :location)))
-          status-code))
+          (typecase status-code
+            (foo.lisp.http-response:status-code-redirect
+             (error 'redirect-not-allowed-error
+                    :status-code status-code
+                    :location (getf (lack/response:response-headers
+                                     foo.lisp.vinland:*response*)
+                                    :location)))
+            (t
+             status-code))))
   (when render
     (when (lack/response:response-body foo.lisp.vinland:*response*)
       (error 'foo.lisp.vinland/web:double-render-error))
@@ -420,21 +406,24 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
         (let ((status-code
                 (etypecase status
                   (keyword
-                   (foo.lisp.vinland/response:status-keyword-to-code
+                   (foo.lisp.http-response:status-keyword-to-code
                     status))
                   (integer status))))
           (check-type status-code
-                      foo.lisp.vinland/response:status-code-redirect)
+                      foo.lisp.http-response:status-code-redirect)
           status-code))
-  (let ((location-host (quri:uri-host (quri:uri location))))
+  (let ((location-host (multiple-value-bind (scheme userinfo host port path query fragment)
+                           (quri:parse-uri location)
+                         (declare (ignore scheme userinfo port path query fragment))
+                         host)))
     (declare (type (or null string)))
     (and location-host
          (null allow-other-host)
          (not (equal location-host
                      (lack/request:request-server-name foo.lisp.vinland:*request*)))
-         (signal 'unsafe-redirect-error
-                 :origin foo.lisp.vinland:*origin*
-                 :location location)))
+         (error 'unsafe-redirect-error
+                :origin foo.lisp.vinland:*origin*
+                :location location)))
   (setf (lack/response:response-headers foo.lisp.vinland:*response*)
         (append (lack/response:response-headers foo.lisp.vinland:*response*)
                 (append headers (list :location location))))
@@ -474,12 +463,12 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
         (let ((status-code
                 (etypecase status
                   (keyword
-                   (foo.lisp.vinland/response:status-keyword-to-code
+                   (foo.lisp.http-response:status-keyword-to-code
                     status))
                   (integer status))))
           (declare (type integer status-code))
           (check-type status-code
-                      foo.lisp.vinland/response:status-code-redirect)
+                      foo.lisp.http-response:status-code-redirect)
           status-code))
   (let* ((referrer (gethash "referer"
                             (lack/request:request-headers
@@ -492,15 +481,18 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
                        default-location)))
     (declare (type (or null simple-string) referrer)
              (type string location))
-    (let ((location-host (quri:uri-host (quri:uri location))))
+    (let ((location-host (multiple-value-bind (scheme userinfo host port path query fragment)
+                             (quri:parse-uri location)
+                           (declare (ignore scheme userinfo port path query fragment))
+                           host)))
       (declare (type (or null string)))
       (and location-host
            (null allow-other-host)
            (not (equal location-host
                        (lack/request:request-server-name foo.lisp.vinland:*request*)))
-           (signal 'unsafe-redirect-error
-                   :origin foo.lisp.vinland:*origin*
-                   :location location)))
+           (error 'unsafe-redirect-error
+                  :origin foo.lisp.vinland:*origin*
+                  :location location)))
     (setf (lack/response:response-headers foo.lisp.vinland:*response*)
           (append (lack/response:response-headers
                    foo.lisp.vinland:*response*)

@@ -77,7 +77,7 @@
                             (flex:make-in-memory-input-stream
                              (flex:string-to-octets "hello=world"))
                             :external-format :utf-8)))))
-       (ok (equal "world" (foo.lisp.vinland/web:get-body-param "hello")))
+       (ok (string= "world" (foo.lisp.vinland/web:get-body-param "hello")))
        (ok (null (foo.lisp.vinland/web:get-body-param "foo")))))
 
   (testing
@@ -154,7 +154,7 @@
 
 (deftest negotiate
     (testing
-     "performs content-negotiation by returning the body of the matching clause, checked against the Accept header"
+     "performs media-type negotiation by returning the body of the matching clause, checked against the Accept header"
      (let ((foo.lisp.vinland:*request*
              (lack/request:make-request
               `(:request-uri "/"
@@ -162,11 +162,54 @@
                 :headers ,(alexandria:alist-hash-table
                            '(("accept" . "application/json"))
                            :test #'equal)))))
-       (ok (equal "foo" (foo.lisp.vinland/web:negotiate
-                          ("text/html"
-                           "bar")
-                          ("application/json"
-                           "foo"))))))
+       (ok (string= "foo" (foo.lisp.vinland/web:negotiate
+                           ("text/html"
+                            "bar")
+                           ("application/json"
+                            "foo"))))))
+
+  (testing "matches the clause by traversing the Accept header, checking against each parsed value"
+           (let ((foo.lisp.vinland:*request*
+                   (lack/request:make-request
+                    `(:request-uri "/"
+                      :request-method :GET
+                      :headers ,(alexandria:alist-hash-table
+                                 '(("accept" . "text/vnd.turbo-stream.html, text/html, application/xhtml+xml"))
+                                 :test #'equal)))))
+             (ok (string= "quux" (foo.lisp.vinland/web:negotiate
+                                  ("text/html"
+                                   "bar")
+                                  ("text/vnd.turbo-stream.html"
+                                   "quux")
+                                  ("application/json"
+                                   "foo"))))))
+
+  (testing "when no matches the clause by traversing the Accept header, checking against each parsed value, when the match is not the first value"
+           (let ((foo.lisp.vinland:*request*
+                   (lack/request:make-request
+                    `(:request-uri "/"
+                      :request-method :GET
+                      :headers ,(alexandria:alist-hash-table
+                                 '(("accept" . "text/vnd.turbo-stream.html, text/html, application/xhtml+xml"))
+                                 :test #'equal)))))
+             (ok (string= "bar" (foo.lisp.vinland/web:negotiate
+                                 ("text/html"
+                                  "bar")
+                                 ("application/json"
+                                  "foo"))))))
+
+  (testing "returns the body of the matched clause, even when the body is NIL"
+           (let ((foo.lisp.vinland:*request*
+                   (lack/request:make-request
+                    `(:request-uri "/"
+                      :request-method :GET
+                      :headers ,(alexandria:alist-hash-table
+                                 '(("accept" . "text/vnd.turbo-stream.html, text/html, application/xhtml+xml"))
+                                 :test #'equal)))))
+             (ok (null (foo.lisp.vinland/web:negotiate
+                        ("text/html")
+                        ("application/json"
+                         "foo"))))))
 
   (testing
    "signals CLIENT-ERROR when no clause matches and no fallback is provided"
@@ -178,10 +221,10 @@
                          '(("accept" . "application/xhtml+xml"))
                          :test #'equal)))))
      (ok (signals (foo.lisp.vinland/web:negotiate
-                    ("text/html"
-                     "bar")
-                    ("application/json"
-                     "foo"))
+                   ("text/html"
+                    "bar")
+                   ("application/json"
+                    "foo"))
                   'foo.lisp.vinland/web:client-error))))
 
   (testing
@@ -193,13 +236,13 @@
               :headers ,(alexandria:alist-hash-table
                          '(("accept" . "application/xhtml+xml"))
                          :test #'equal)))))
-     (ok (equal "baaz" (foo.lisp.vinland/web:negotiate
-                         ("text/html"
-                          "bar")
-                         ("application/json"
-                          "foo")
-                         (t
-                          "baaz")))))))
+     (ok (string= "baaz" (foo.lisp.vinland/web:negotiate
+                          ("text/html"
+                           "bar")
+                          ("application/json"
+                           "foo")
+                          (t
+                           "baaz")))))))
 
 (deftest set-response-status
     (testing
@@ -247,8 +290,8 @@
                   :content-type "text/plain"
                   :x-foo "bar")))
        (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-         (ok (equal "text/plain" (getf response-headers :content-type)))
-         (ok (equal "bar" (getf response-headers :x-foo)))))))
+         (ok (string= "text/plain" (getf response-headers :content-type)))
+         (ok (string= "bar" (getf response-headers :x-foo)))))))
 
 (deftest binding
     (testing
@@ -279,7 +322,7 @@
                                           :headers ,(alexandria:alist-hash-table
                                                      '(("cookie" . "_sid=xyz;_foo=123"))
                                                      :test #'equal)))))
-       (ok (equal "123" (foo.lisp.vinland/web:cookie "_foo")))
+       (ok (string= "123" (foo.lisp.vinland/web:cookie "_foo")))
        (ok (null (foo.lisp.vinland/web:cookie "_bogus"))))))
 
 (deftest set-cookies
@@ -356,7 +399,7 @@
                                                           :test #'equal)))))
        (multiple-value-bind (result foundp)
            (foo.lisp.vinland/web:session "foo")
-         (ok (equal "bar" result))
+         (ok (string= "bar" result))
          (ok (eq t foundp)))
        (multiple-value-bind (result foundp)
            (foo.lisp.vinland/web:session "baaz")
@@ -377,7 +420,7 @@
                                           :lack.session ,(alexandria:alist-hash-table
                                                           '()
                                                           :test #'equal)))))
-       (ok (equal "bar" (foo.lisp.vinland/web:set-session "foo" "bar")))
+       (ok (string= "bar" (foo.lisp.vinland/web:set-session "foo" "bar")))
        (ok (= 11 (foo.lisp.vinland/web:set-session :foo 11)))
        (let ((session (getf (lack/request:request-env foo.lisp.vinland:*request*)
                             :lack.session)))
@@ -450,8 +493,8 @@
      (let ((result (foo.lisp.vinland/web:html-safe "<p>Hello, World.</p>")))
        (ok (eq (type-of result)
                'foo.lisp.vinland/web:html-safe))
-       (ok (equal "<p>Hello, World.</p>"
-                  (foo.lisp.vinland/web:html-safe-value result))))))
+       (ok (string= "<p>Hello, World.</p>"
+                    (foo.lisp.vinland/web:html-safe-value result))))))
 
 (deftest render
     (testing
@@ -467,7 +510,7 @@
        (ok (equal '(:content-type "text/plain"
                     :x-foo "bar")
                   (lack/response:response-headers foo.lisp.vinland:*response*)))
-       (ok (equal "I'm a teapot :)" (lack/response:response-body foo.lisp.vinland:*response*)))))
+       (ok (string= "I'm a teapot :)" (lack/response:response-body foo.lisp.vinland:*response*)))))
 
   (testing
    "signals REDIRECT-NOT-ALLOWED-ERROR when called with a 3xx redirection status"
@@ -499,7 +542,7 @@
        (ok (equal '(:content-type "text/plain"
                     :x-foo "bar")
                   (lack/response:response-headers foo.lisp.vinland:*response*)))
-       (ok (equal "I'm a teapot" (lack/response:response-body foo.lisp.vinland:*response*)))))
+       (ok (string= "I'm a teapot" (lack/response:response-body foo.lisp.vinland:*response*)))))
 
   (testing
    "signals REDIRECT-NOT-ALLOWED-ERROR when called with a 3xx redirection status"
@@ -541,8 +584,8 @@
                                                 :headers '(:x-foo "bar"))))
        (ok (= 303 (lack/response:response-status foo.lisp.vinland:*response*)))
        (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-         (ok (equal "/foo" (getf response-headers :location)))
-         (ok (equal "bar" (getf response-headers :x-foo))))))
+         (ok (string= "/foo" (getf response-headers :location)))
+         (ok (string= "bar" (getf response-headers :x-foo))))))
 
   (testing
    "redirects to the given location with the given status keyword and headers"
@@ -556,8 +599,8 @@
                                               :headers '(:x-foo "bar"))))
      (ok (= 303 (lack/response:response-status foo.lisp.vinland:*response*)))
      (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-       (ok (equal "/foo" (getf response-headers :location)))
-       (ok (equal "bar" (getf response-headers :x-foo))))))
+       (ok (string= "/foo" (getf response-headers :location)))
+       (ok (string= "bar" (getf response-headers :x-foo))))))
 
   (testing
    "signals DOUBLE-RENDER-ERROR when the response already has a body"
@@ -655,8 +698,8 @@
                                                      :headers '(:x-foo "bar"))))
        (ok (= 303 (lack/response:response-status foo.lisp.vinland:*response*)))
        (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-         (ok (equal "/foo" (getf response-headers :location)))
-         (ok (equal "bar" (getf response-headers :x-foo))))))
+         (ok (string= "/foo" (getf response-headers :location)))
+         (ok (string= "bar" (getf response-headers :x-foo))))))
 
   (testing
    "redirects to the referrer location when present, with the given status keyword and headers"
@@ -672,8 +715,8 @@
                                                    :headers '(:x-foo "bar"))))
      (ok (= 303 (lack/response:response-status foo.lisp.vinland:*response*)))
      (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-       (ok (equal "/foo" (getf response-headers :location)))
-       (ok (equal "bar" (getf response-headers :x-foo))))))
+       (ok (string= "/foo" (getf response-headers :location)))
+       (ok (string= "bar" (getf response-headers :x-foo))))))
 
   (testing
    "redirects to the default-location when the referrer is not present, with the given status code and headers"
@@ -689,8 +732,8 @@
                                                    :headers '(:x-foo "bar"))))
      (ok (= 303 (lack/response:response-status foo.lisp.vinland:*response*)))
      (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-       (ok (equal "/fallback" (getf response-headers :location)))
-       (ok (equal "bar" (getf response-headers :x-foo))))))
+       (ok (string= "/fallback" (getf response-headers :location)))
+       (ok (string= "bar" (getf response-headers :x-foo))))))
 
   (testing
    "redirects to the default-location when the referrer is not present, with the given status keyword and headers"
@@ -706,8 +749,8 @@
                                                    :headers '(:x-foo "bar"))))
      (ok (= 303 (lack/response:response-status foo.lisp.vinland:*response*)))
      (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
-       (ok (equal "/fallback" (getf response-headers :location)))
-       (ok (equal "bar" (getf response-headers :x-foo))))))
+       (ok (string= "/fallback" (getf response-headers :location)))
+       (ok (string= "bar" (getf response-headers :x-foo))))))
 
   (testing
    "signals DOUBLE-RENDER-ERROR when the response already has a body"

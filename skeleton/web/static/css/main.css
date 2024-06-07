@@ -49,11 +49,6 @@ body {
 }
 
 <%- @unless skip-flash %>
-/*
- * NOTE: .fadein is used to delay the visibility of the default demo-app flash message
- * while shoelace components load. .fadein and the fadein keyframe can be safely removed.
- */
-
 .fadein {
   opacity: 0;
   visibility: hidden;

@@ -35,8 +35,11 @@
   :depends-on ("clingon"
                "com.inuoe.jzon"
                "foo.lisp.lack-middleware-charset"
+               "foo.lisp.lack-middleware-debug"
+               "foo.lisp.lack-middleware-errors"
                "foo.lisp.lack-middleware-head"
                "foo.lisp.lack-middleware-http-methods"
+               "foo.lisp.lack-middleware-redact"
                "foo.lisp.lack-middleware-redis"
                "foo.lisp.lack-middleware-request-id"
                "foo.lisp.lack-middleware-security-headers"
@@ -47,7 +50,6 @@
                "foo.lisp.vinland"
                "frugal-uuid"
                "lack"
-               "lack-middleware-backtrace"
                "lack-middleware-session"
                "lack-middleware-static"
                "local-time"
@@ -59,7 +61,7 @@
   :components ((:module "src"
                 :components
                 ((:file "cli" :depends-on ("app"))
-                 (:file "app" :depends-on ("web"))
+                 (:file "app" :depends-on ("http-error" "web"))
                  (:file "web" :depends-on ("controller" "params"))
                  (:file "params" :depends-on ("controller"))
                  <%- @if skip-hotwire %>
@@ -73,6 +75,7 @@
                  <%- @unless skip-hotwire %>
                  (:file "turbo" :depends-on ("component"))
                  <%- @endunless %>
+                 (:file "http-error" :depends-on ("component" "layout"))
                  (:file "layout" :depends-on ("component"))
                  (:file "component" :depends-on ("dao"))
                  (:file "dao" :depends-on ("config"))
@@ -117,6 +120,8 @@
                  <%- @unless skip-hotwire %>
                  (:file "turbo" :depends-on ("package"))
                  <%- @endunless %>
+                 (:file "http-error" :depends-on ("package"))
+                 (:file "layout" :depends-on ("package"))
                  (:file "component" :depends-on ("package"))
                  (:file "dao" :depends-on ("package"))
                  (:file "config" :depends-on ("package"))
@@ -134,6 +139,8 @@
                       <%- @unless skip-hotwire %>
                       (symbol-call :parachute :test :<% @var name %>/turbo)
                       <%- @endunless %>
+                      (symbol-call :parachute :test :<% @var name %>/layout)
+                      (symbol-call :parachute :test :<% @var name %>/http-error)
                       (symbol-call :parachute :test :<% @var name %>/view)
                       (symbol-call :parachute :test :<% @var name %>/store)
                       (symbol-call :parachute :test :<% @var name %>/user)

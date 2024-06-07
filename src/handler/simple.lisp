@@ -108,179 +108,137 @@
              (list env))
     #1=(block nil
          (let ((foo.lisp.vinland:*request* (foo.lisp.lack/request:make-request env))
-               (foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
+               (foo.lisp.vinland:*response* (lack/response:make-response 200 ()))
+               (foo.lisp.vinland:*route* route-name)
+               (foo.lisp.vinland:*binding* (getf env :raven.binding)))
            (declare (type lack/request:request foo.lisp.vinland:*request*)
-                    (type lack/response:response foo.lisp.vinland:*response*))
-           (let ((request-uri (lack/request:request-uri foo.lisp.vinland:*request*)))
-             (declare (type string request-uri))
-             (and (route/simple-max-uri-length metadata)
-                  (> (length request-uri)
-                     (route/simple-max-uri-length metadata))
-                  (return
-                    `(414
-                      (:content-type "text/plain"
-                       :content-length 12)
-                      ("URI Too Long")))))
-           (let ((request-method (lack/request:request-method foo.lisp.vinland:*request*)))
-             (declare (type keyword request-method))
-             (unless (member request-method (route/simple-methods metadata) :test #'eq)
-               (return
-                 `(405
-                   (:content-type "text/plain"
-                    :content-length 18)
-                   ("Method Not Allowed"))))
-             (let ((handler (or (case request-method
-                                  (:GET (route/simple-get metadata))
-                                  (:HEAD (or (route/simple-head metadata)
-                                             (route/simple-get metadata)))
-                                  (:POST (route/simple-post metadata))
-                                  (:PUT (route/simple-put metadata))
-                                  (:PATCH (route/simple-patch metadata))
-                                  (:DELETE (route/simple-delete metadata))
-                                  (:OPTIONS (or (route/simple-options metadata)
-                                                #'(lambda (env)
-                                                    (when (getf env :lack.session.options)
-                                                      (setf (getf env :lack.session.options)
-                                                            '(:new-session nil :expire nil)))
-                                                    (return
-                                                      `(204
-                                                        (:allow ,(format nil "~{~A~^, ~}"
-                                                                         (route/simple-methods metadata))
-                                                         :content-length 0
-                                                         :set-cookie nil)
-                                                        (""))))))
-                                  (:TRACE (route/simple-trace metadata))
-                                  (:CONNECT (route/simple-connect metadata))
-                                  (t
-                                   (return
-                                     `(501
-                                       (:content-type "text/plain"
-                                        :content-length 15)
-                                       ("Not Implemented")))))
-                                (return
-                                  `(500
-                                    (:content-type "text/plain"
-                                     :content-length 21)
-                                    ("Internal Server Error"))))))
-               (declare (type function handler))
-               (cond
-                 ((and (member request-method '(:GET :HEAD) :test #'eq)
-                       (route/simple-provide metadata))
-                  (unless (some #'(lambda (media-type-str)
-                                    (declare (type string media-type-str))
-                                    (lack/request:request-accepts-p foo.lisp.vinland:*request*
-                                                                    media-type-str))
-                                  (route/simple-provide metadata))
-                    (return
-                      `(406
-                        (:content-type "text/plain"
-                         :content-length 12)
-                        ("Unacceptable")))))
-                 ((and (member request-method '(:POST :PUT :PATCH) :test #'eq)
-                       (route/simple-accept metadata))
-                  (let* ((content-type (lack/request:request-content-type foo.lisp.vinland:*request*))
-                         (content-media-type (and content-type
-                                                  (lack/media-type:make-media-type content-type))))
-                    (declare (type (or null string) content-type)
-                             (type (or null lack/media-type:media-type) content-media-type))
-                    (unless (and content-media-type
-                                 (some #'(lambda (media-type-str)
-                                           (declare (type string media-type-str)
-                                                    (type lack/media-type:media-type content-media-type))
-                                           (lack/media-type:match-media-type (lack/media-type:make-media-type
-                                                                              media-type-str)
-                                                                             content-media-type))
+                    (type lack/response:response foo.lisp.vinland:*response*)
+                    (type symbol foo.lisp.vinland:*route*)
+                    (type binding-alist foo.lisp.vinland:*binding*)
+                    (type string foo.lisp.vinland:*origin*))
+           (let ((foo.lisp.vinland:*origin*
+                   (let ((uri-scheme (lack/request:request-uri-scheme foo.lisp.vinland:*request*))
+                         (server-name (lack/request:request-server-name foo.lisp.vinland:*request*))
+                         (server-port (lack/request:request-server-port foo.lisp.vinland:*request*)))
+                     (declare (type (simple-array character (*)) uri-scheme server-name)
+                              (type integer server-port))
+                     (or (case server-port
+                           (80 (and (string= "http" uri-scheme)
+                                    (format nil "~A://~A" uri-scheme server-name)))
+                           (443 (and (string= "https" uri-scheme)
+                                     (format nil "~A://~A" uri-scheme server-name))))
+                         (format nil "~A://~A:~D" uri-scheme server-name server-port)))))
+             (let ((request-uri (lack/request:request-uri foo.lisp.vinland:*request*)))
+               (declare (type string request-uri))
+               (and (route/simple-max-uri-length metadata)
+                    (> (length request-uri)
+                       (route/simple-max-uri-length metadata))
+                    (error 'foo.lisp.vinland/web:client-error :status-code 414)))
+             (let ((request-method (lack/request:request-method foo.lisp.vinland:*request*)))
+               (declare (type keyword request-method))
+               (unless (member request-method (route/simple-methods metadata) :test #'eq)
+                 (return
+                   (error 'foo.lisp.vinland/web:client-error :status-code 405)))
+               (let ((handler (or (case request-method
+                                    (:GET (route/simple-get metadata))
+                                    (:HEAD (or (route/simple-head metadata)
+                                               (route/simple-get metadata)))
+                                    (:POST (route/simple-post metadata))
+                                    (:PUT (route/simple-put metadata))
+                                    (:PATCH (route/simple-patch metadata))
+                                    (:DELETE (route/simple-delete metadata))
+                                    (:OPTIONS (or (route/simple-options metadata)
+                                                  #'(lambda (env)
+                                                      (when (getf env :lack.session.options)
+                                                        (setf (getf env :lack.session.options)
+                                                              '(:new-session nil :expire nil)))
+                                                      (return
+                                                        `(204
+                                                          (:allow ,(format nil "~{~A~^, ~}"
+                                                                           (route/simple-methods metadata))
+                                                           :content-length 0
+                                                           :set-cookie nil)
+                                                          (""))))))
+                                    (:TRACE (route/simple-trace metadata))
+                                    (:CONNECT (route/simple-connect metadata))
+                                    (t
+                                     (error 'foo.lisp.vinland/web:server-error :status-code 501)))
+                                  (error 'foo.lisp.vinland/web:server-error :status-code 500))))
+                 (declare (type function handler))
+                 (cond
+                   ((and (member request-method '(:GET :HEAD) :test #'eq)
+                         (route/simple-provide metadata))
+                    (unless (foo.lisp.lack/request/content-negotiation:negotiate-media-type
+                             foo.lisp.vinland:*request*
+                             (route/simple-provide metadata))
+                      (error 'foo.lisp.vinland/web:client-error :status-code 406)))
+                   ((and (member request-method '(:POST :PUT :PATCH) :test #'eq)
+                         (route/simple-accept metadata))
+                    (let* ((content-type (lack/request:request-content-type foo.lisp.vinland:*request*))
+                           (content-media-type (and content-type
+                                                    (lack/media-type:make-media-type content-type))))
+                      (declare (type (or null string) content-type)
+                               (type (or null lack/media-type:media-type) content-media-type))
+                      (unless (and content-media-type
+                                   (some #'(lambda (media-type-str)
+                                             (declare (type string media-type-str)
+                                                      (type lack/media-type:media-type content-media-type))
+                                             (lack/media-type:match-media-type (lack/media-type:make-media-type
+                                                                                media-type-str)
+                                                                               content-media-type))
                                          (route/simple-accept metadata)))
-                      (return
-                        `(415
-                          (:content-type "text/plain"
-                           :content-length 22)
-                          ("Unsupported Media Type")))))))
-               (let ((max-content-length (route/simple-max-content-length metadata))
-                     (content-length (or (lack/request:request-content-length foo.lisp.vinland:*request*)
-                                         0)))
-                 (declare (type (or null bignum) max-content-length)
-                          (type (or null bignum) content-length))
-                 (and max-content-length
-                      content-length
-                      (= content-length (max content-length max-content-length))
-                      (return
-                        `(413
-                          (:content-type "text/plain"
-                           :content-length 17)
-                          ("Content Too Large")))))
-               (handler-case (progn
-                               (foo.lisp.lack/request:request-query-parameters
-                                foo.lisp.vinland:*request*)
-                               (foo.lisp.lack/request:request-body-parameters
-                                foo.lisp.vinland:*request*))
-                 (error (e)
-                   (declare (ignore e))
-                   (return
-                     `(400
-                       (:content-type "text/plain"
-                        :content-length 11)
-                       ("Bad Request")))))
-               (let ((foo.lisp.vinland:*route* route-name)
-                     (foo.lisp.vinland:*binding* (getf env :raven.binding))
-                     (foo.lisp.vinland:*origin*
-                       (let ((uri-scheme (lack/request:request-uri-scheme foo.lisp.vinland:*request*))
-                             (server-name (lack/request:request-server-name foo.lisp.vinland:*request*))
-                             (server-port (lack/request:request-server-port foo.lisp.vinland:*request*)))
-                         (declare (type (simple-array character (*)) uri-scheme server-name)
-                                  (type integer server-port))
-                         (or (case server-port
-                               (80 (and (string= "http" uri-scheme)
-                                        (format nil "~A://~A" uri-scheme server-name)))
-                               (443 (and (string= "https" uri-scheme)
-                                         (format nil "~A://~A" uri-scheme server-name))))
-                             (format nil "~A://~A:~D" uri-scheme server-name server-port))))
-                     (metadata-before (route/simple-before metadata))
-                     (metadata-after (route/simple-after metadata)))
-                 (declare (type symbol foo.lisp.vinland:*route*)
-                          (type binding-alist foo.lisp.vinland:*binding*)
-                          (type string foo.lisp.vinland:*origin*)
-                          (type function-list metadata-before metadata-after))
-                 (let ((result (handler-case (catch 'foo.lisp.vinland/web:halt
-                                               (unwind-protect (progn
-                                                                 (dolist (before metadata-before)
-                                                                   (declare (type function before))
-                                                                   (funcall before))
-                                                                 (funcall handler))
-                                                 (dolist (after metadata-after)
-                                                   (declare (type function after))
-                                                   (funcall after))))
-                                 (foo.lisp.vinland/web:client-error (condition)
-                                   (return
-                                     (foo.lisp.vinland/response:status-text-clack-response
-                                      (slot-value condition 'foo.lisp.vinland/web::status))))
-                                 (foo.lisp.vinland/web:server-error (condition)
-                                   (return
-                                     (foo.lisp.vinland/response:status-text-clack-response
-                                      (slot-value condition 'foo.lisp.vinland/web::status)))))))
-                   (etypecase result
-                     (null
-                      (lack/response:finalize-response foo.lisp.vinland:*response*))
-                     (list
-                      (and (lack/response:response-body foo.lisp.vinland:*response*)
-                           (error 'foo.lisp.vinland/web:double-render-error))
-                      result)
-                     (string
-                      (and (lack/response:response-body foo.lisp.vinland:*response*)
-                           (error 'foo.lisp.vinland/web:double-render-error))
-                      (setf (lack/response:response-body foo.lisp.vinland:*response*)
-                            result)
-                      (lack/response:finalize-response foo.lisp.vinland:*response*))
-                     ((vector (unsigned-byte 8))
-                      (and (lack/response:response-body foo.lisp.vinland:*response*)
-                           (error 'foo.lisp.vinland/web:double-render-error))
-                      (setf (lack/response:response-body foo.lisp.vinland:*response*)
-                            result)
-                      (lack/response:finalize-response foo.lisp.vinland:*response*))
-                     (function
-                      (and (lack/response:response-body foo.lisp.vinland:*response*)
-                           (error 'foo.lisp.vinland/web:double-render-error))
-                      result)))))))))
+                        (error 'foo.lisp.vinland/web:client-error :status-code 415)))))
+                 (let ((max-content-length (route/simple-max-content-length metadata))
+                       (content-length (or (lack/request:request-content-length foo.lisp.vinland:*request*)
+                                           0)))
+                   (declare (type (or null bignum) max-content-length)
+                            (type (or null bignum) content-length))
+                   (and max-content-length
+                        content-length
+                        (= content-length (max content-length max-content-length))
+                        (error 'foo.lisp.vinland/web:client-error :status-code 413)))
+                 (handler-case (progn
+                                 (foo.lisp.lack/request:request-query-parameters
+                                  foo.lisp.vinland:*request*)
+                                 (foo.lisp.lack/request:request-body-parameters
+                                  foo.lisp.vinland:*request*))
+                   (error (e)
+                     (declare (ignore e))
+                     (error 'foo.lisp.vinland/web:client-error :status-code 400)))
+                 (let ((metadata-before (route/simple-before metadata))
+                       (metadata-after (route/simple-after metadata)))
+                   (declare (type function-list metadata-before metadata-after))
+                   (let ((result (unwind-protect (catch 'foo.lisp.vinland/web:halt
+                                                   (dolist (before metadata-before)
+                                                     (declare (type function before))
+                                                     (funcall before))
+                                                   (funcall handler))
+                                   (dolist (after metadata-after)
+                                     (declare (type function after))
+                                     (funcall after)))))
+                     (etypecase result
+                       (null
+                        (lack/response:finalize-response foo.lisp.vinland:*response*))
+                       (list
+                        (and (lack/response:response-body foo.lisp.vinland:*response*)
+                             (error 'foo.lisp.vinland/web:double-render-error))
+                        result)
+                       (string
+                        (and (lack/response:response-body foo.lisp.vinland:*response*)
+                             (error 'foo.lisp.vinland/web:double-render-error))
+                        (setf (lack/response:response-body foo.lisp.vinland:*response*)
+                              result)
+                        (lack/response:finalize-response foo.lisp.vinland:*response*))
+                       ((vector (unsigned-byte 8))
+                        (and (lack/response:response-body foo.lisp.vinland:*response*)
+                             (error 'foo.lisp.vinland/web:double-render-error))
+                        (setf (lack/response:response-body foo.lisp.vinland:*response*)
+                              result)
+                        (lack/response:finalize-response foo.lisp.vinland:*response*))
+                       (function
+                        (and (lack/response:response-body foo.lisp.vinland:*response*)
+                             (error 'foo.lisp.vinland/web:double-render-error))
+                        result))))))))))
 
   #-ecl
   (defmethod foo.lisp.raven:%handle-request/fast ((metadata route/simple)
@@ -293,4 +251,4 @@
 
   #-ecl
   (fast-generic-functions:seal-domain #'foo.lisp.raven:%handle-request/fast
-                                        '(route/simple symbol list)))
+                                      '(route/simple symbol list)))

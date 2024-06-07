@@ -3,31 +3,22 @@
 
 (in-package #:cl-user)
 
-(defpackage #:foo.lisp.vinland/response
-  (:use #:cl)
-  (:export #:status-code
-           #:status-code-informational
-           #:status-code-success
-           #:status-code-redirect
-           #:status-code-client-error
-           #:status-code-server-error)
-  (:export #:unknown-status-error)
-  (:export #:status-code-to-keyword
-           #:status-code-to-text
-           #:status-keyword-to-code
-           #:status-keyword-to-text
-           #:status-text
-           #:status-text-clack-response)
-  (:documentation "HTTP response related utilities."))
-
 (defpackage #:foo.lisp.vinland/params
   (:use #:cl)
   (:export #:validate-params
            #:%validate-params)
   (:documentation "Package for validation of request parameters; non-essential but can be called from route handlers."))
 
+(defpackage #:foo.lisp.vinland/static
+  (:use #:cl)
+  (:export #:generate-error-files)
+  (:documentation "Package for generation of static assets, including error pages."))
+
 (defpackage #:foo.lisp.vinland/web
   (:use #:cl)
+  (:import-from #:foo.lisp.http-response
+                #:client-error
+                #:server-error)
   (:export #:query-params
            #:body-params
            #:get-query-params
@@ -56,6 +47,7 @@
            #:unsafe-redirect-error
            #:double-render-error
            #:invalid-binding-error
+           #:http-error
            #:client-error
            #:server-error)
   (:export #:html-safe
@@ -87,7 +79,57 @@
            #:define-controller)
   (:documentation "Defines the \"simple\" handler sub-protocol (identifier symbol: ROUTE/SIMPLE)."))
 
-(defpackage #:foo.lisp.vinland
+(defpackage #:foo.lisp.vinland/errors-app/util
+  (:use #:cl)
+  (:export #:*root-directory*
+           #:*media-type-fallback*
+           #:*handler-media-types*
+           #:*handlers*
+           #:*static-file-types*
+           #:*static-file-namestrings*
+           #:*static-media-types*
+           #:*default-static-file-types*
+           #:*recommended-http-error-response-status-codes*
+           #:*http-error-response-status-codes*)
+  (:documentation "Defines common utilities for use with error applications"))
+
+(defpackage #:foo.lisp.vinland/errors-app/simple/basic
+  (:use #:cl)
+  (:import-from #:foo.lisp.vinland/errors-app/util
+                #:*root-directory*
+                #:*media-type-fallback*
+                #:*handlers*
+                #:*handler-media-types*
+                #:*static-file-types*
+                #:*static-file-namestrings*
+                #:*static-media-types*
+                #:*default-static-file-types*
+                #:*recommended-http-error-response-status-codes*
+                #:*http-error-response-status-codes*)
+  (:export #:make-app)
+  (:export #:*recommended-http-error-response-status-codes*
+           #:*http-error-response-status-codes*)
+  (:documentation "Defines the \"basic\" errors application for use with LACK/MIDDLEWARE/ERRORS."))
+
+(defpackage #:foo.lisp.vinland/errors-app/simple/dynamic-override
+  (:use #:cl)
+  (:import-from #:foo.lisp.vinland/errors-app/util
+                #:*root-directory*
+                #:*media-type-fallback*
+                #:*handlers*
+                #:*handler-media-types*
+                #:*static-file-types*
+                #:*static-file-namestrings*
+                #:*static-media-types*
+                #:*default-static-file-types*
+                #:*recommended-http-error-response-status-codes*
+                #:*http-error-response-status-codes*)
+  (:export #:make-app)
+  (:export #:*recommended-http-error-response-status-codes*
+           #:*http-error-response-status-codes*)
+  (:documentation "Defines the \"dynamic-override\" errors application for use with LACK/MIDDLEWARE/ERRORS."))
+
+(uiop:define-package #:foo.lisp.vinland
   (:use #:cl)
   (:import-from #:foo.lisp.resource
                 #:*origin*)

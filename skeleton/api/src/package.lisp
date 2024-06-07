@@ -2,7 +2,8 @@
 
 (defpackage #:<% @var name %>/config
   (:use #:cl)
-  (:export #:*system-directory*)
+  (:export #:*system-directory*
+           #:*static-errors-directory*)
   (:documentation "Package containing configuration-related special variables."))
 
 (defpackage #:<% @var name %>/dao
@@ -12,6 +13,16 @@
 (defpackage #:<% @var name %>/store
   (:use #:cl #:<% @var name %>/dao)
   (:documentation "Package containing persistence related functions."))
+
+(defpackage #:<% @var name %>/http-error
+  (:use #:cl)
+  (:import-from #:<% @var name %>/config
+                #:*static-errors-directory*)
+  (:export #:*static-file-types*
+           #:*required-handlers*
+           #:*http-errors*)
+  (:export #:generate-static)
+  (:documentation "Package containing functions used to render HTTP error responses."))
 
 (defpackage #:<% @var name %>/json
   (:use #:cl #:<% @var name %>/dao)

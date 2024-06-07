@@ -1,3 +1,31 @@
+## [1.4.0] - 2024-06-14
+### Changed
+* Features:
+  * Add redact, errors, debug middlewares to skeleton
+  * Add errors-app packages for use with errors middleware
+  * Add package FOO.LISP.VINLAND.STATIC to generate error files
+  * Add http-error package to skeleton
+  * Add var `*STATIC-ERRORS-DIRECTORY*` to skeleton
+  * Add static files to skeleton
+
+* Misc:
+  * Extract FOO.LISP.VINLAND/RESPONSE to FOO.LISP.HTTP-RESPONSE
+  * Remove backtrace middleware
+  * Add program to .gitignore
+  * Specify ':debug nil' clackup option in README.md
+  * Add dependencies to skeleton README.md
+  * Rename test packages
+  * Setup special vars early in %HANDLE-REQUEST
+  * Signal CLIENT-ERROR or SERVER-ERROR from %HANDLE-REQUEST
+  * Add additional tests for NEGOTIATE macro
+  * Call ERROR instead of SIGNAL
+  * Revert how to lookup origin host, to be slightly more efficient
+
+* Bugfixes:
+  * Fix bug with skeleton generation when name includes dot
+  * Use CATCH/THROW for NEGOTIATE macro
+    - avoid possible issues when calling RETURN from body clause
+
 ## [1.3.0] - 2024-05-28
 ### Changed
 * Features:
@@ -54,6 +82,8 @@
 - Add response utilities
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
+
+[1.4.0] https://github.com/lisplizards/vinland/compare/v1.3.0...v1.4.0
 
 [1.3.0] https://github.com/lisplizards/vinland/compare/v1.2.0...v1.3.0
 

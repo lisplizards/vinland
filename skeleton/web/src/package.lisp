@@ -3,7 +3,8 @@
 (defpackage #:<% @var name %>/config
   (:use #:cl)
   (:export #:*system-directory*
-           #:*static-directory*)
+           #:*static-directory*
+           #:*static-errors-directory*)
   (:documentation "Package containing configuration-related special variables."))
 
 (defpackage #:<% @var name %>/dao
@@ -18,7 +19,8 @@
   (:use #:cl)
   (:import-from #:lack/middleware/user
                 #:*current-user*)
-  (:export #:flash-container
+  (:export #:csrf-input
+           #:flash-container
            #:flash
            #:site-header
            #:site-footer)
@@ -26,10 +28,20 @@
 
 (defpackage #:<% @var name %>/layout
   (:use #:cl)
-  (:import-from #:make-hash
-                #:make-hash)
   (:export #:with-main-layout)
   (:documentation "Package containing HTML layout macros called from view functions."))
+
+(defpackage #:<% @var name %>/http-error
+  (:use #:cl)
+  (:import-from #:<% @var name %>/config
+                #:*static-errors-directory*)
+  (:import-from #:<% @var name %>/layout
+                #:with-main-layout)
+  (:export #:*static-file-types*
+           #:*required-handlers*
+           #:*http-errors*)
+  (:export #:generate-static)
+  (:documentation "Package containing functions used to render HTTP error responses."))
 
 (defpackage #:<% @var name %>/view
   (:use #:cl)
@@ -60,6 +72,8 @@
                 #:make-hash)
   (:import-from #:lack/middleware/user
                 #:*current-user*)
+  (:import-from #:lack/middleware/redis
+                #:with-redis)
   (:import-from #:foo.lisp.flash
                 #:clear-flash
                 #:get-flash
@@ -67,6 +81,15 @@
                 #:flash-now
                 #:flash-keep
                 #:delete-flash)
+  (:import-from #:foo.lisp.resource
+                #:path
+                #:url
+                #:dom-id)
+  (:import-from #:foo.lisp.http-response
+                #:client-error
+                #:server-error
+                #:status-code
+                #:status-code-error)
   (:import-from #:foo.lisp.params
                 #:get-param
                 #:get-nested-param
