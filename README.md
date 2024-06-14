@@ -69,7 +69,6 @@ In development, you can start your application by calling `CLACK:CLACKUP`.
 ### Rough edges
 
 The Vinland skeleton does not yet provide, but plans to support:
-* custom error pages (you can define your own middleware for this as a workaround)
 * migrations and database integrations (support is planned for at least: cl-migratum, cl-dbi, and postmodern)
 * functions for easily starting and stopping the server in development
 * integration with a configuration library
