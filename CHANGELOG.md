@@ -1,3 +1,8 @@
+## [1.4.1] - 2024-06-14
+### Changed
+* Bugfixes:
+  * Fix variable reference in dynamic-override errors app
+
 ## [1.4.0] - 2024-06-14
 ### Changed
 * Features:
@@ -82,6 +87,8 @@
 - Add response utilities
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
+
+[1.4.1] https://github.com/lisplizards/vinland/compare/v1.4.0...v1.4.1
 
 [1.4.0] https://github.com/lisplizards/vinland/compare/v1.3.0...v1.4.0
 

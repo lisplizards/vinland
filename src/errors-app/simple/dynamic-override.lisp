@@ -128,7 +128,7 @@ Options:
               (*static-file-namestrings* static-file-namestrings)
               (*static-media-types* static-media-types)
               (*handlers* handlers)
-              (*handler-media-types* media-types)
+              (*handler-media-types* handler-media-types)
               (*media-type-fallback* media-type-fallback)
               (metadata (get 'dynamic-override-errors-app 'foo.lisp.raven:route-metadata)))
           (declare (type pathname *root-directory*)
