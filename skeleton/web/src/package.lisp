@@ -19,6 +19,9 @@
   (:use #:cl)
   (:import-from #:lack/middleware/user
                 #:*current-user*)
+  (:import-from #:foo.lisp.vinland/web
+                #:route-url
+                #:route-path)
   (:export #:csrf-input
            #:flash-container
            #:flash
@@ -47,6 +50,9 @@
   (:use #:cl)
   (:import-from #:<% @var name %>/layout
                 #:with-main-layout)
+  (:import-from #:foo.lisp.vinland/web
+                #:route-url
+                #:route-path)
   (:export #:root)
   (:documentation "Package containing functions to render complete HTML documents (Content-Type: text/html)."))
 
@@ -100,6 +106,8 @@
   (:import-from #:foo.lisp.vinland/handler/simple
                 #:define-controller)
   (:import-from #:foo.lisp.vinland/web
+                #:route-url
+                #:route-path
                 #:halt
                 #:client-error
                 #:server-error

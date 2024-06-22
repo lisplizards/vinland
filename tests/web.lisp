@@ -356,35 +356,36 @@
                   (lack/response:response-set-cookies foo.lisp.vinland:*response*))))))
 
 (deftest delete-cookie
-  (testing
-   "sets a cookie with an expiration at UNIX epoch to instruct the user-agent to remove the cookie"
-   (let ((foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
-     (ok (null (foo.lisp.vinland/web:delete-cookie "_foo")))
-     (ok (equal `("_foo" (:value ""
-                          :path "/"
-                          :secure nil
-                          :samesite :strict
-                          :expires 2208988800))
-                (lack/response:response-set-cookies foo.lisp.vinland:*response*))))))
+    (testing
+     "sets a cookie with an expiration at UNIX epoch to instruct the user-agent to remove the cookie"
+     (let ((foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
+       (ok (null (foo.lisp.vinland/web:delete-cookie "_foo")))
+       (ok (equal `("_foo" (:value ""
+                            :path "/"
+                            :httponly t
+                            :secure nil
+                            :samesite :strict
+                            :expires 2208988800))
+                  (lack/response:response-set-cookies foo.lisp.vinland:*response*))))))
 
 (deftest set-session-options
     (testing
      "sets Lack session options, merging in values from the plist"
      (let ((foo.lisp.vinland:*request*
-             (lack/request:make-request `(:request-uri "/"
-                                          :request-method :GET
-                                          :headers ,(make-hash-table :test #'equal)
-                                          :lack.session.options (:id "xyz"
-                                                                 :new-session nil
-                                                                 :change-id nil
-                                                                 :expire t)))))
+             (lack/request:make-request (list :request-uri "/"
+                                              :request-method :GET
+                                              :headers (make-hash-table :test #'equal)
+                                              :lack.session.options '(:id "xyz"
+                                                                      :new-session nil
+                                                                      :change-id nil
+                                                                      :expire t)))))
        (ok (null (foo.lisp.vinland/web:set-session-options '(:new-session t :expire nil :change-id t))))
-       (ok (equal (getf (lack/request:request-env foo.lisp.vinland:*request*)
-                        :lack.session.options)
-                  '(:id "xyz"
-                    :new-session t
-                    :change-id t
-                    :expire nil))))))
+       (ok (equalp (getf (lack/request:request-env foo.lisp.vinland:*request*)
+                         :lack.session.options)
+                   '(:id "xyz"
+                     :new-session t
+                     :change-id t
+                     :expire nil))))))
 
 (deftest session
     (testing
@@ -853,3 +854,63 @@
      (ok (equal (getf (lack/response:response-headers foo.lisp.vinland:*response*)
                       :location)
                 "http://bar.example.org/")))))
+
+(defun widgets (env)
+  (declare (ignore env))
+  (let ((foo.lisp.vinland:*origin* "http://acme.example.com"))
+    `(200
+      (:x-route-url ,(foo.lisp.vinland/web:route-url 'widgets)
+       :x-route-path ,(foo.lisp.vinland/web:route-path 'widgets)
+       :content-type "text/plain")
+      ("Widgets"))))
+
+(defun widget (env)
+  (declare (ignore env))
+  (let ((foo.lisp.vinland:*origin* "http://acme.example.com"))
+    `(200
+      (:x-route-url ,(foo.lisp.vinland/web:route-url
+                      'widget
+                      :|widget-id| "abc")
+       :x-route-path ,(foo.lisp.vinland/web:route-path
+                       'widget
+                       :|widget-id| "abc")
+       :content-type "text/plain")
+      ("Widget"))))
+
+(deftest route-url-and-route-path-with-no-kwargs
+    (testing
+     "calls the path generator for the route, prefixing with the origin for ROUTE-URL"
+     (let* ((router (foo.lisp.raven:compile-router
+                     `(("/widgets" ,'widgets))))
+            (web (funcall router :clack)))
+       (let ((response (funcall web `(:path-info "/widgets"
+                                      :method :GET
+                                      :accept "text/plain"
+                                      :headers ,(alexandria:alist-hash-table
+                                                 ()
+                                                 :test #'equal)))))
+         (let ((response-code (first response))
+               (x-route-url (getf (second response) :x-route-url))
+               (x-route-path (getf (second response) :x-route-path)))
+           (ok (= 200 response-code))
+           (ok (string= "http://acme.example.com/widgets" x-route-url))
+           (ok (string= "/widgets" x-route-path)))))))
+
+(deftest route-url-and-route-path-with-kwargs
+    (testing
+     "calls the path generator for the route, prefixing with the origin for ROUTE-URL"
+     (let* ((router (foo.lisp.raven:compile-router
+                     `(("/widgets/:widget-id" ,'widget))))
+            (web (funcall router :clack)))
+       (let ((response (funcall web `(:path-info "/widgets/xyz"
+                                      :method :GET
+                                      :accept "text/plain"
+                                      :headers ,(alexandria:alist-hash-table
+                                                 ()
+                                                 :test #'equal)))))
+         (let ((response-code (first response))
+               (x-route-url (getf (second response) :x-route-url))
+               (x-route-path (getf (second response) :x-route-path)))
+           (ok (= 200 response-code))
+           (ok (string= "http://acme.example.com/widgets/abc" x-route-url))
+           (ok (string= "/widgets/abc" x-route-path)))))))

@@ -16,6 +16,8 @@
 
 (defpackage #:foo.lisp.vinland/web
   (:use #:cl)
+  (:import-from #:foo.lisp.raven
+                #:route-path)
   (:import-from #:foo.lisp.http-response
                 #:client-error
                 #:server-error)
@@ -42,7 +44,9 @@
            #:clear-session
            #:csrf-token
            #:halt
-           #:render)
+           #:render
+           #:route-url
+           #:route-path)
   (:export #:redirect-not-allowed-error
            #:unsafe-redirect-error
            #:double-render-error

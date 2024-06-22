@@ -10,6 +10,7 @@
   :source-control (:git "https://github.com/lisplizards/vinland.git")
   :depends-on ("foo.lisp.http-response"
                "foo.lisp.lack-middleware-flash"
+               "foo.lisp.lack-middleware-errors"
                "foo.lisp.lack-request"
                "foo.lisp.params"
                "foo.lisp.raven"

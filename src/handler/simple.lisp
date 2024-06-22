@@ -137,8 +137,7 @@
              (let ((request-method (lack/request:request-method foo.lisp.vinland:*request*)))
                (declare (type keyword request-method))
                (unless (member request-method (route/simple-methods metadata) :test #'eq)
-                 (return
-                   (error 'foo.lisp.vinland/web:client-error :status-code 405)))
+                 (error 'foo.lisp.vinland/web:client-error :status-code 405))
                (let ((handler (or (case request-method
                                     (:GET (route/simple-get metadata))
                                     (:HEAD (or (route/simple-head metadata)

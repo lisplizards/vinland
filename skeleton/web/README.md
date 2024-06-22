@@ -52,7 +52,6 @@ Run tests:
 * [com.inuoe.jzon](https://github.com/Zulu-Inuoe/jzon)
 * [foo.lisp.lack-middleware-charset](https://github.com/lisplizards/lack-middleware-charset)
 * [foo.lisp.lack-middleware-debug](https://github.com/lisplizards/lack-middleware-debug)
-* [foo.lisp.lack-middleware-errors](https://github.com/lisplizards/lack-middleware-errors)
 * [foo.lisp.lack-middleware-head](https://github.com/lisplizards/lack-middleware-head)
 * [foo.lisp.lack-middleware-http-methods](https://github.com/lisplizards/lack-middleware-http-methods)
 * [foo.lisp.lack-middleware-redis](https://github.com/lisplizards/lack-middleware-redis)

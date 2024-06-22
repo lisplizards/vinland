@@ -36,7 +36,6 @@
                "clingon"
                "com.inuoe.jzon"
                "foo.lisp.lack-middleware-debug"
-               "foo.lisp.lack-middleware-errors"
                "foo.lisp.lack-middleware-head"
                "foo.lisp.lack-middleware-http-methods"
                "foo.lisp.lack-middleware-redact"

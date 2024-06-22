@@ -3,6 +3,14 @@
 
 (in-package #:foo.lisp.vinland/errors-app/simple/basic)
 
+(declaim (ftype (function (&key (:root pathname)
+                                (:static-file-types list)
+                                (:handlers list)
+                                (:required-static-response-codes list)
+                                (:required-handler-response-codes list)
+                                (:media-type-fallback string))
+                          function)
+                make-app))
 (defun make-app (&key root
                    (static-file-types *default-static-file-types*)
                    (handlers ())
@@ -34,6 +42,12 @@ Options:
 * HANDLERS: association list of dynamic handlers: each pair has a media-type key and an association list of response-codes and handlers as the datum
 * MEDIA-TYPE-FALLBACK: default media-type when the request Accept header does not overlap with the defined media-types; a string
 "
+  (declare (type pathname root)
+           (type list
+                 static-file-types handlers
+                 required-static-response-codes
+                 required-handler-response-codes)
+           (type string media-type-fallback))
   (check-type root pathname)
   (assert (uiop:directory-pathname-p root)
           nil
@@ -51,6 +65,7 @@ Options:
   (check-type media-type-fallback string)
   (multiple-value-bind (static-files static-file-namestrings static-media-types)
       (lack/middleware/errors/util:collect-static-files root :file-types static-file-types)
+    (declare (ignore static-files))
     (dolist (pair handlers)
       (check-type pair cons)
       (destructuring-bind (media-type . handler-list)
@@ -115,19 +130,17 @@ Options:
   :fboundp nil
   :method :GET
   :GET (lambda ()
-         (declare ;; (optimize (speed 3) (safety 0) (debug 0))
-          (type pathname *root-directory*)
-          (type list
-                *static-file-types*
-                *static-media-types*
-                *static-file-namestrings*
-                *handlers*
-                *handler-media-types*))
+         (declare (type pathname *root-directory*)
+                  (type list
+                        *static-file-types*
+                        *static-media-types*
+                        *static-file-namestrings*
+                        *handlers*
+                        *handler-media-types*))
          (let* ((env (lack/request:request-env foo.lisp.vinland:*request*))
                 (response-code (lack/middleware/errors/util:parse-response-code env))
-                (accept-media-types (lack/request:request-accept foo.lisp.vinland:*request*))
                 (response))
-           (declare (type list env accept-media-types response)
+           (declare (type list env response)
                     (type foo.lisp.http-response:status-code-error response-code))
            (block render-static
              (let ((media-type-string (or (foo.lisp.lack/request/content-negotiation:negotiate-media-type

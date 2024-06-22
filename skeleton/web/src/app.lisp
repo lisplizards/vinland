@@ -73,7 +73,9 @@
             :intercept (lambda (condition)
                          (declare (type error condition))
                          (typecase condition
-                           (http-error (slot-value condition 'foo.lisp.http-response:status-code))
+                           (foo.lisp.http-response:http-error (slot-value
+                                                               condition
+                                                               'foo.lisp.http-response:status-code))
                            (foo.lisp.raven:no-route-error 404)
                            (lack/middleware/session/store/redis-pool:redis-pool-timeout-error 503))))
    (:debug :special-variables '(foo.lisp.vinland:*route*

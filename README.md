@@ -4,7 +4,7 @@
 
 Website: https://www.vinland.dev/
 
-Vinland is a Clack-based web framework built on the [Raven](https://github.com/lisplizards/raven) router.
+Vinland is a Clack-based web framework built on the [Raven](https://github.com/lisplizards/raven) URL router.
 
 ## Warning
 
@@ -63,14 +63,13 @@ In development, you can start your application by calling `CLACK:CLACKUP`.
 ```common-lisp
 (ql:quickload '("demo-app" "clack"))
 
-(clack:clackup demo-app/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil)
+(clack:clackup demo-app/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil :debug nil)
 ```
 
 ### Rough edges
 
 The Vinland skeleton does not yet provide, but plans to support:
 * migrations and database integrations (support is planned for at least: cl-migratum, cl-dbi, and postmodern)
-* functions for easily starting and stopping the server in development
 * integration with a configuration library
 * integration with system managers: Qlot, CLPM, ocicl
 * integration with a templating library (currently supports only Spinneret)
@@ -99,14 +98,16 @@ Run tests:
 ## Dependencies
 
 * [cl-project](https://github.com/fukamachi/cl-project)
+* [foo.lisp.http-response](https://github.com/lisplizards/http-response)
+* [foo.lisp.lack-middleware-errors](https://github.com/lisplizards/lack-middleware-errors)
 * [foo.lisp.lack-middleware-flash](https://github.com/lisplizards/lack-middleware-flash)
 * [foo.lisp.lack-request](https://github.com/lisplizards/lack-request)
 * [foo.lisp.params](https://github.com/lisplizards/params)
 * [foo.lisp.raven](https://github.com/lisplizards/raven)
 * [foo.lisp.resource](https://github.com/lisplizards/resource)
-* [lack-middleware-csrf](https://github.com/fukamachi/lack/blob/master/lack-middleware-csrf.asd)
 * [lack-app-file](https://github.com/fukamachi/lack/blob/master/lack-app-file.asd)
 * [lack-component](https://github.com/fukamachi/lack/blob/master/lack-component.asd)
+* [lack-middleware-csrf](https://github.com/fukamachi/lack/blob/master/lack-middleware-csrf.asd)
 * [lack-response](https://github.com/fukamachi/lack/blob/master/lack-response.asd)
 * [uiop](https://gitlab.common-lisp.net/asdf/asdf/-/tree/master/uiop)
 

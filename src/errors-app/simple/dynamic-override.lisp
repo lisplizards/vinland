@@ -3,10 +3,12 @@
 
 (in-package #:foo.lisp.vinland/errors-app/simple/dynamic-override)
 
+(declaim (type (or null function) *dynamic-override-p*))
 (defvar *dynamic-override-p* nil
   "Function for which the result represents whether to serve a static file (NIL return value)
 or call the dynamic override function (non-NIL return value); dynamically bound.")
 
+(declaim (type function *default-dynamic-override-p*))
 (defparameter *default-dynamic-override-p*
   (lambda (env)
     (declare (ignore env))
@@ -14,6 +16,15 @@ or call the dynamic override function (non-NIL return value); dynamically bound.
   "Lambda that takes a Clack ENV and returns NIL. Default value for parameter DYNAMIC-OVERRIDE-P
 of function MAKE-APP.")
 
+(declaim (ftype (function (&key (:root pathname)
+                                (:required-static-response-codes list)
+                                (:required-handler-response-codes list)
+                                (:static-file-types list)
+                                (:handlers list)
+                                (:media-type-fallback string)
+                                (:dynamic-override-p function))
+                          function)
+                make-app))
 (defun make-app (&key root
                    (required-static-response-codes ())
                    (required-handler-response-codes ())
@@ -55,6 +66,14 @@ Options:
 * MEDIA-TYPE-FALLBACK: default media-type when the request Accept header does not overlap with the defined media-types; a string
 * DYNAMIC-OVERRIDE-P: function to check whether to render a dynamic handler; NIL return value indicates should render a static file
 "
+  (declare (type pathname root)
+           (type list
+                 required-static-response-codes
+                 required-handler-response-codes
+                 static-file-types
+                 handlers)
+           (type string media-type-fallback)
+           (type function dynamic-override-p))
   (check-type root pathname)
   (assert (uiop:directory-pathname-p root)
           nil
@@ -65,7 +84,6 @@ Options:
   (check-type media-type-fallback string)
   (assert (not (null static-file-types)))
   (assert (not (null handlers)))
-  (check-type media-type-fallback string)
   (dolist (pair static-file-types)
     (check-type pair cons)
     (destructuring-bind (media-type . file-type)
@@ -74,6 +92,7 @@ Options:
       (check-type file-type string)))
   (multiple-value-bind (static-files static-file-namestrings static-media-types)
       (lack/middleware/errors/util:collect-static-files root :file-types static-file-types)
+    (declare (ignore static-files))
     (dolist (pair handlers)
       (check-type pair cons)
       (destructuring-bind (media-type . handler-list)

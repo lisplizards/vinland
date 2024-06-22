@@ -3,6 +3,54 @@
 
 (in-package #:foo.lisp.vinland/web)
 
+(define-condition unsafe-redirect-error (simple-error)
+  ((status-code :initarg :status-code
+                :type foo.lisp.http-response:status-code-redirect)
+   (location :initarg :location)
+   (origin :initarg :origin))
+  (:report (lambda (condition stream)
+             (with-slots (status-code location)
+                 condition
+               (format stream
+                       "Unsafe redirect: ~A: ~A" status-code location))))
+  (:documentation "Error signalled when the server attempted to respond with
+a redirect to a different host without explicitly authorizing a redirect to
+an different host; may indicate an Open Redirect attack if the redirect
+location is provided by user input."))
+
+(define-condition redirect-not-allowed-error (error)
+  ((status-code :initarg :status-code
+                :type integer)
+   (location :initarg :location
+             :type string))
+  (:report (lambda (condition stream)
+             (with-slots (status-code location)
+                 condition
+               (format stream
+                       "Redirect not allowed: (Status: ~A, Location: ~A)"
+                       status-code location))))
+  (:documentation "Error signalled when attempting to redirect from a function
+or macro that does not provide mitigation against Open Redirect attacks. Redirects
+(status: 3xx) should be performed by function REDIRECT or REDIRECT-BACK."))
+
+(define-condition double-render-error (error)
+  ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "Attempted to set the response body more than once")))
+  (:documentation "Error signalled when attempting to set the response body more than once."))
+
+(define-condition invalid-binding-error (error)
+  ((name :initarg :name))
+  (:report (lambda (condition stream)
+             (with-slots (name) condition
+               (format stream "Invalid binding: ~A" name))))
+  (:documentation "Error signalled when attempting to look up the value for a dynamic
+path component that does not exist in the route pattern for the current URL."))
+
+(defstruct html-safe "Box for trusted HTML content."
+  (value "" :type string))
+
 (defmacro query-params ()
   "Returns the query parameters association list from the request
 struct; a macro."
@@ -129,8 +177,8 @@ or REDIRECT-BACK."
 Returns NIL; a macro."
   `(progn
      (setf (lack/response:response-headers foo.lisp.vinland:*response*)
-           (append (lack/response:response-headers foo.lisp.vinland:*response*)
-                   (list ,@headers)))
+           (nconc (lack/response:response-headers foo.lisp.vinland:*response*)
+                  ',headers))
      (values)))
 
 (defmacro binding (name)
@@ -180,6 +228,7 @@ header to the response with the same name but with an expiration in the
 past, at UNIX epoch. Returns NIL; a macro."
   `(set-cookies (list (cons ,name (list :value ""
                                         :path "/"
+                                        :httponly t
                                         :secure nil
                                         :samesite :strict
                                         :expires 2208988800)))))
@@ -187,12 +236,14 @@ past, at UNIX epoch. Returns NIL; a macro."
 (defmacro set-session-options (options-plist)
   "Updates environment key LACK.SESSION.OPTIONS, returning NIL; a macro.
 Property list OPTIONS-PLIST may contain keys: ID, NEW-SESSION, CHANGE-ID, EXPIRE."
-  `(progn
+  `(let ((session-options-copy (copy-list (getf (lack/request:request-env foo.lisp.vinland:*request*)
+                                                :lack.session.options))))
      (loop for (key value) of-type (keyword t) on ,options-plist by #'cddr
-           do (setf (getf (getf (lack/request:request-env foo.lisp.vinland:*request*)
-                                :lack.session.options)
-                          key)
+           do (setf (getf session-options-copy key)
                     value))
+     (setf (getf (lack/request:request-env foo.lisp.vinland:*request*)
+                 :lack.session.options)
+           session-options-copy)
      (values)))
 
 (defmacro session (key)
@@ -289,53 +340,8 @@ redirects should be performed with either REDIRECT or REDIRECT-BACK."
                                    :headers ,headers
                                    :render #'(lambda () (apply ,view ,args)))))
 
-(define-condition redirect-not-allowed-error (error)
-  ((status-code :initarg :status-code
-                :type integer)
-   (location :initarg :location
-             :type string))
-  (:report (lambda (condition stream)
-             (with-slots (status-code location)
-                 condition
-               (format stream
-                       "Redirect not allowed: (Status: ~A, Location: ~A)"
-                       status-code location))))
-  (:documentation "Error signalled when attempting to redirect from a function
-or macro that does not provide mitigation against Open Redirect attacks. Redirects
-(status: 3xx) should be performed by function REDIRECT or REDIRECT-BACK."))
-
-(define-condition unsafe-redirect-error (simple-error)
-  ((status-code :initarg :status-code
-                :type foo.lisp.http-response:status-code-redirect)
-   (location :initarg :location)
-   (origin :initarg :origin))
-  (:report (lambda (condition stream)
-             (with-slots (status-code location)
-                 condition
-               (format stream
-                       "Unsafe redirect: ~A: ~A" status-code location))))
-  (:documentation "Error signalled when the server attempted to respond with
-a redirect to a different host without explicitly authorizing a redirect to
-an different host; may indicate an Open Redirect attack if the redirect
-location is provided by user input."))
-
-(define-condition double-render-error (error)
-  ()
-  (:report (lambda (condition stream)
-             (declare (ignore condition))
-             (format stream "Attempted to set the response body more than once")))
-  (:documentation "Error signalled when attempting to set the response body more than once."))
-
-(define-condition invalid-binding-error (error)
-  ((name :initarg :name))
-  (:report (lambda (condition stream)
-             (with-slots (name) condition
-               (format stream "Invalid binding: ~A" name))))
-  (:documentation "Error signalled when attempting to look up the value for a dynamic
-path component that does not exist in the route pattern for the current URL."))
-
-(defstruct html-safe "Box for trusted HTML content"
-           (value "" :type string))
+(defmacro route-url (route-name &rest kwargs &key &allow-other-keys)
+  `(concatenate 'string foo.lisp.vinland:*origin* (route-path ,route-name ,@kwargs)))
 
 (defun respond (&key (status 200) render headers)
   "Sets the response status code based on STATUS (integer or keyword),
@@ -351,13 +357,15 @@ Signals REDIRECT-NOT-ALLOWED-ERROR when given a redirect (3xx) response code,
 as redirects should be performed with either REDIRECT or REDIRECT-BACK."
   (declare (optimize (speed 3) (safety 0) (debug 0))
            (type (or integer keyword) status)
-           (type (or null function) render)
+           (type function render)
            (type list headers))
   (when headers
     (setf (lack/response:response-headers foo.lisp.vinland:*response*)
-          (append (lack/response:response-headers
-                   foo.lisp.vinland:*response*)
-                  headers)))
+          (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
+            (declare (type list response-headers))
+            (if (null response-headers)
+                headers
+                (append response-headers headers)))))
   (setf (lack/response:response-status foo.lisp.vinland:*response*)
         (let ((status-code
                 (etypecase status
@@ -373,11 +381,10 @@ as redirects should be performed with either REDIRECT or REDIRECT-BACK."
                                     :location)))
             (t
              status-code))))
-  (when render
-    (when (lack/response:response-body foo.lisp.vinland:*response*)
-      (error 'foo.lisp.vinland/web:double-render-error))
-    (setf (lack/response:response-body foo.lisp.vinland:*response*)
-          (funcall render)))
+  (when (lack/response:response-body foo.lisp.vinland:*response*)
+    (error 'foo.lisp.vinland/web:double-render-error))
+  (setf (lack/response:response-body foo.lisp.vinland:*response*)
+        (funcall render))
   (values))
 
 (defun redirect (location &key (status 302)
@@ -424,9 +431,18 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
          (error 'unsafe-redirect-error
                 :origin foo.lisp.vinland:*origin*
                 :location location)))
+  (and (getf headers :location)
+       (error 'redirect-not-allowed-error
+              :response-code (lack/response:response-status foo.lisp.vinland:*response*)
+              :location (getf headers :location)))
   (setf (lack/response:response-headers foo.lisp.vinland:*response*)
-        (append (lack/response:response-headers foo.lisp.vinland:*response*)
-                (append headers (list :location location))))
+        (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
+          (declare (type list response-headers))
+          (if (null response-headers)
+              (if headers
+                  (append headers (list :location location))
+                  (list :location location))
+              (append response-headers headers (list :location location)))))
   (when flash
     (foo.lisp.flash/state:flash foo.lisp.vinland:*flash* flash))
   (when (lack/response:response-body foo.lisp.vinland:*response*)
@@ -493,10 +509,18 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
            (error 'unsafe-redirect-error
                   :origin foo.lisp.vinland:*origin*
                   :location location)))
+    (and (getf headers :location)
+         (error 'redirect-not-allowed-error
+                :response-code (lack/response:response-status foo.lisp.vinland:*response*)
+                :location (getf headers :location)))
     (setf (lack/response:response-headers foo.lisp.vinland:*response*)
-          (append (lack/response:response-headers
-                   foo.lisp.vinland:*response*)
-                  (append headers (list :location location)))))
+          (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
+            (declare (type list response-headers))
+            (if (null response-headers)
+                (if headers
+                    (append headers (list :location location))
+                    (list :location location))
+                (append response-headers headers (list :location location))))))
   (when flash
     (foo.lisp.flash/state:flash foo.lisp.vinland:*flash* flash))
   (when (lack/response:response-body foo.lisp.vinland:*response*)

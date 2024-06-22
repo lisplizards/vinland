@@ -23,6 +23,7 @@
 (defun top-level/sub-commands ()
   (list
    (start/command)
+   (list-routes/command)
    (find-route/command)))
 
 (defun start/command ()
@@ -78,6 +79,22 @@
    :worker-num (clingon:getopt cmd :worker-num)
    :debug nil))
 
+(defun list-routes/command ()
+  (clingon:make-command
+   :name "list-routes"
+   :description "List all routes matching the given prefix"
+   :options ()
+   :handler #'list-routes/handler
+   :examples '(("List all routes" . "<% @var program %> list-routes /")
+               ("List all routes beginning with prefix '/widgets'" . "<% @var program %> list-routes /widgets"))))
+
+(defun list-routes/handler (cmd)
+  (let ((args (clingon:command-arguments cmd)))
+    (assert (= 1 (length args))
+            nil
+            "list-routes takes exactly 1 argument: the path prefix to match")
+    (funcall <% @var name %>/web:*router* `(:print-routes ,(first args)))))
+
 (defun find-route/command ()
   (clingon:make-command
    :name "find-route"
@@ -92,10 +109,4 @@
     (assert (= 1 (length args))
             nil
             "find-route takes exactly 1 argument: the path to test")
-    (destructuring-bind (path)
-        args
-      (let ((result (funcall <% @var name %>/web:*router* `(:find-route ,path))))
-        (assert result
-                nil
-                "")
-        (format t "~A" result)))))
+    (format t "~A" (funcall <% @var name %>/web:*router* `(:find-route ,(first args))))))

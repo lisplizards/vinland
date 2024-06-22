@@ -28,6 +28,9 @@
   (:use #:cl #:<% @var name %>/dao)
   (:import-from #:make-hash
                 #:make-hash)
+  (:import-from #:foo.lisp.vinland/web
+                #:route-url
+                #:route-path)
   (:export #:root)
   (:documentation "Package containing JSON document generation functions called from controllers."))
 
@@ -53,6 +56,8 @@
   (:import-from #:foo.lisp.vinland/handler/simple
                 #:define-controller)
   (:import-from #:foo.lisp.vinland/web
+                #:route-url
+                #:route-path
                 #:halt
                 #:client-error
                 #:server-error
