@@ -1,3 +1,24 @@
+## [1.5.0] - 2024-06-22
+### Changed
+* Features:
+  * Re-export ROUTE-PATH macro from Raven (path generators)
+  * Add ROUTE-URL macro
+  * Add list-routes subcommand to CLI skeleton
+
+* Misc:
+  * Update README.md
+  * Add declaim statements
+  * Hoist condition definitions and struct above macros in web.lisp
+  * Make RENDER parameter required in RESPOND
+  * Optimize redirect functions to resolve warnings: check if append arg is NIL
+  * Check that redirect functions do not attempt to set location in HEADERS param
+
+* Bugfixes:
+  * Add direct dependency to foo.lisp.lack-middleware-errors to fix compilation
+  * Fix symbol reference in app.lisp by providing absolute package path
+  * Fix SET-SESSION-OPTIONS subtle bug by copying options list
+    - test results had shown difference in behavior between SBCL and ECL
+
 ## [1.4.1] - 2024-06-14
 ### Changed
 * Bugfixes:
@@ -87,6 +108,8 @@
 - Add response utilities
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
+
+[1.5.0] https://github.com/lisplizards/vinland/compare/v1.4.1...v1.5.0
 
 [1.4.1] https://github.com/lisplizards/vinland/compare/v1.4.0...v1.4.1
 
