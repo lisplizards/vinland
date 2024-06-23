@@ -177,8 +177,8 @@ or REDIRECT-BACK."
 Returns NIL; a macro."
   `(progn
      (setf (lack/response:response-headers foo.lisp.vinland:*response*)
-           (nconc (lack/response:response-headers foo.lisp.vinland:*response*)
-                  ',headers))
+           (append (lack/response:response-headers foo.lisp.vinland:*response*)
+                   ',headers))
      (values)))
 
 (defmacro binding (name)

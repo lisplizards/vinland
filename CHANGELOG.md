@@ -1,3 +1,8 @@
+## [1.5.1] - 2024-06-22
+### Changed
+* Bugfixes:
+  * Revert to append instead of nconc for SET-RESPONSE-HEADERS
+
 ## [1.5.0] - 2024-06-22
 ### Changed
 * Features:
