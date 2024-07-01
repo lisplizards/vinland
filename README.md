@@ -14,57 +14,9 @@ Additionally, struct definitions may be updated from time to time, so it is reco
 
 ## Getting Started
 
-### Generate project
+### Quickstart
 
-Vinland provides a project generator, contained in system `FOO.LISP.VINLAND.SKELETON`. Use of the skeleton is optional but recommended: it's the easiest way to get started, and you might want to at least try it in order to gain an understanding of the framework and its capabilities.
-
-You can generate a project in one of two flavors, "web" (the default) or "api".
-
-Among other options, you can also choose the test framework ("parachute" or "rove"); the default is "parachute".
-
-Web-flavor example: "web" is the default, but for clarity here we explicitly specify the option.
-
-```common-lisp
-(ql:quickload "foo.lisp.vinland.skeleton")
-
-(foo.lisp.vinland.skeleton:make-project
-  :name :web-demo
-  :license "MIT"
-  :author "Erik the Red"
-  :flavor "web")
-
-```
-
-API-flavor example: specify a non-default name for the binary executable and rove as the test framework.
-
-```common-lisp
-(ql:quickload "foo.lisp.vinland.skeleton")
-
-(foo.lisp.vinland.skeleton:make-project
-  :name :api-demo
-  :program "api-server"
-  :author "Bjarni Herjólfsson"
-  :maintainer "Leif Erikson"
-  :flavor "api"
-  :test-framework "rove")
-
-```
-
-Inspect the complete list of options by running:
-
-```common-lisp
-(documentation 'foo.lisp.vinland.skeleton:make-project 'function)
-```
-
-For production, you can build a binary executable for your platform by running `(asdf:make :demo-app)`.
-
-In development, you can start your application by calling `CLACK:CLACKUP`.
-
-```common-lisp
-(ql:quickload '("demo-app" "clack"))
-
-(clack:clackup demo-app/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil :debug nil)
-```
+Refer to the [Quickstart Guide](https://github.com/lisplizards/vinland/blob/master/docs/QUICKSTART.md) in this repository for instructions on generating a new project and getting started with Vinland.
 
 ### Rough edges
 
