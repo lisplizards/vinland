@@ -119,7 +119,7 @@ Options:
             "MEDIA-TYPE-FALLBACK (~A) must be represented in HANDLERS"
             media-type-fallback)
     (let ((handler-media-types (mapcar #'car handlers)))
-      (declare (type list media-types))
+      (declare (type list static-media-types))
       (dolist (media-type static-media-types)
         (check-type media-type string)
         (let ((file-type (cdr (assoc media-type static-file-types :test #'equal))))
@@ -152,6 +152,7 @@ Options:
               (metadata (get 'dynamic-override-errors-app 'foo.lisp.raven:route-metadata)))
           (declare (type pathname *root-directory*)
                    (type function *dynamic-override-p*)
+                   (type string *media-type-fallback*)
                    (type list
                          *static-file-types*
                          *static-file-namestrings*
@@ -167,15 +168,6 @@ Options:
   :fboundp nil
   :method :GET
   :GET (lambda ()
-         (declare (type pathname *root-directory*)
-                  (type function *dynamic-override-p*)
-                  (type string *media-type-fallback*)
-                  (type list
-                        *static-file-types*
-                        *static-media-types*
-                        *static-file-namestrings*
-                        *handlers*
-                        *handler-media-types*))
          (block nil
            (let* ((env (lack/request:request-env foo.lisp.vinland:*request*))
                   (response-code (lack/middleware/errors/util:parse-response-code env))

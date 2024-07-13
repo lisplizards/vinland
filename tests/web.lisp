@@ -285,13 +285,34 @@
                                         `(:request-uri "/"
                                           :request-method :GET
                                           :headers ,(make-hash-table :test #'equal))))
-           (foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
+           (foo.lisp.vinland:*response* (lack/response:make-response 200 '(:content-type "text/html"
+                                                                           :x-bar "baaz"))))
        (ok (null (foo.lisp.vinland/web:set-response-headers
                   :content-type "text/plain"
                   :x-foo "bar")))
        (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
          (ok (string= "text/plain" (getf response-headers :content-type)))
-         (ok (string= "bar" (getf response-headers :x-foo)))))))
+         (ok (= 1 (count :content-type response-headers)))
+         (ok (string= "bar" (getf response-headers :x-foo)))
+         (ok (string= "baaz" (getf response-headers :x-bar)))))))
+
+(deftest append-response-headers
+    (testing
+     "appends response headers on the Lack response"
+     (let ((foo.lisp.vinland:*request* (lack/request:make-request
+                                        `(:request-uri "/"
+                                          :request-method :GET
+                                          :headers ,(make-hash-table :test #'equal))))
+           (foo.lisp.vinland:*response* (lack/response:make-response 200 '(:content-type "text/html"
+                                                                           :x-bar "baaz"))))
+       (ok (null (foo.lisp.vinland/web:append-response-headers
+                  :content-type "text/plain"
+                  :x-foo "bar")))
+       (let ((response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
+         (ok (string= "text/plain" (getf response-headers :content-type)))
+         (ok (= 2 (count :content-type response-headers)))
+         (ok (string= "bar" (getf response-headers :x-foo)))
+         (ok (string= "baaz" (getf response-headers :x-bar)))))))
 
 (deftest binding
     (testing

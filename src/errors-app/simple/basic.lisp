@@ -62,7 +62,6 @@ Options:
         pair
       (check-type media-type string)
       (check-type file-type string)))
-  (check-type media-type-fallback string)
   (multiple-value-bind (static-files static-file-namestrings static-media-types)
       (lack/middleware/errors/util:collect-static-files root :file-types static-file-types)
     (declare (ignore static-files))
@@ -115,6 +114,7 @@ Options:
               (*media-type-fallback* media-type-fallback)
               (metadata (get 'basic-errors-app 'foo.lisp.raven:route-metadata)))
           (declare (type pathname *root-directory*)
+                   (type string *media-type-fallback*)
                    (type list
                          *static-file-types*
                          *static-file-namestrings*
@@ -130,13 +130,6 @@ Options:
   :fboundp nil
   :method :GET
   :GET (lambda ()
-         (declare (type pathname *root-directory*)
-                  (type list
-                        *static-file-types*
-                        *static-media-types*
-                        *static-file-namestrings*
-                        *handlers*
-                        *handler-media-types*))
          (let* ((env (lack/request:request-env foo.lisp.vinland:*request*))
                 (response-code (lack/middleware/errors/util:parse-response-code env))
                 (response))

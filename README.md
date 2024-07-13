@@ -18,18 +18,6 @@ Additionally, struct definitions may be updated from time to time, so it is reco
 
 Refer to the [Quickstart Guide](https://github.com/lisplizards/vinland/blob/master/docs/QUICKSTART.md) in this repository for instructions on generating a new project and getting started with Vinland.
 
-### Future goals
-
-The Vinland skeleton does not yet provide, but plans to support:
-
-* integration with a configuration library [under development]
-* migrations and database integrations (support is planned for at least: cl-migratum, cl-dbi, and postmodern)
-* integration with system managers: Qlot, CLPM, ocicl
-* integration with a templating library as an alternative to Spinneret
-* integration with a JavaScript bundler as an alternative to importmaps
-
-These features will be added in approximately the order listed above.
-
 ### Demo app
 
 See [vinland-todo-app](https://github.com/lisplizards/vinland-todo-app) for an example of an application built with Vinland and Hotwire.
@@ -47,6 +35,18 @@ Run tests:
 
 (asdf:test-system :foo.lisp.vinland)
 ```
+
+## Roadmap
+
+The Vinland skeleton does not yet provide, but plans to support:
+
+* integration with a configuration library *(under development)*
+* migrations and database integrations (support is planned for at least: cl-migratum, cl-dbi, and postmodern)
+* integration with system managers: Qlot, CLPM, ocicl
+* integration with a templating library as an alternative to Spinneret
+* integration with a JavaScript bundler as an alternative to importmaps
+
+These features will be added in approximately the order listed above.
 
 ## Dependencies
 

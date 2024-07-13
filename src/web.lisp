@@ -165,9 +165,9 @@ or REDIRECT-BACK."
        (when (typep ,gensym-status-code
                     'foo.lisp.http-response:status-code-redirect)
          (error 'foo.lisp.vinland/web:redirect-not-allowed-error
-                 :status-code ,gensym-status-code
-                 :location (getf (lack/response:response-headers foo.lisp.vinland:*response*)
-                                 :location)))
+                :status-code ,gensym-status-code
+                :location (getf (lack/response:response-headers foo.lisp.vinland:*response*)
+                                :location)))
        (setf (lack/response:response-status foo.lisp.vinland:*response*)
              ,gensym-status-code)
        (values))))
@@ -175,11 +175,24 @@ or REDIRECT-BACK."
 (defmacro set-response-headers (&rest headers)
   "Sets response headers from variadic argument HEADERS, a property list.
 Returns NIL; a macro."
-  `(progn
-     (setf (lack/response:response-headers foo.lisp.vinland:*response*)
-           (append (lack/response:response-headers foo.lisp.vinland:*response*)
-                   ',headers))
-     (values)))
+  `(loop for (key value) on ',headers by #'cddr
+         do (setf (getf (lack/response:response-headers foo.lisp.vinland:*response*)
+                        key)
+                  value)))
+
+(defmacro append-response-headers (&rest headers)
+  "Appends response headers from variadic header HEADERS, a property list.
+Returns NIL; a macro."
+  (let ((gensym-headers (gensym "headers"))
+        (gensym-response-headers (gensym "response-headers")))
+    `(let ((,gensym-headers ',headers)
+           (,gensym-response-headers (lack/response:response-headers foo.lisp.vinland:*response*)))
+       (declare (type list ,gensym-headers ,gensym-response-headers))
+       (setf (lack/response:response-headers foo.lisp.vinland:*response*)
+             (if ,gensym-response-headers
+                 (append ,gensym-response-headers ,gensym-headers)
+                 ,gensym-headers))
+       (values))))
 
 (defmacro binding (name)
   "Given NAME, a keyword representing a dynamic path component for the

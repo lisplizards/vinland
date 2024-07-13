@@ -1,3 +1,17 @@
+## [1.6.0] - 2024-07-13
+### Changed
+* Features:
+  * Add macro APPEND-RESPONSE-HEADERS
+    - change SET-RESPONSE-HEADERS to replace instead of append
+
+* Bugfixes:
+  * Fix local variable reference in dynamic-override app
+  * Resolve warnings related to unbound special variables
+
+* Other:
+  * Add QUICKSTART.md
+  * Update README.md
+
 ## [1.5.1] - 2024-06-22
 ### Changed
 * Bugfixes:

@@ -33,6 +33,7 @@
            #:negotiate
            #:set-response-status
            #:set-response-headers
+           #:append-response-headers
            #:binding
            #:cookie
            #:set-cookies

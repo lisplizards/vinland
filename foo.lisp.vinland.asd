@@ -2,15 +2,15 @@
 ;; SPDX-License-Identifier: Apache-2.0
 
 (defsystem "foo.lisp.vinland"
-  :version "1.5.1"
+  :version "1.6.0"
   :author "John Newton"
   :license "Apache-2.0"
   :homepage "https://www.vinland.dev/"
   :bug-tracker "https://github.com/lisplizards/vinland/issues"
   :source-control (:git "https://github.com/lisplizards/vinland.git")
   :depends-on ("foo.lisp.http-response"
-               "foo.lisp.lack-middleware-flash"
                "foo.lisp.lack-middleware-errors"
+               "foo.lisp.lack-middleware-flash"
                "foo.lisp.lack-request"
                "foo.lisp.params"
                "foo.lisp.raven"
