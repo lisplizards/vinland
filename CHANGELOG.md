@@ -128,6 +128,10 @@
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
 
+[1.6.0] https://github.com/lisplizards/vinland/compare/v1.5.1...v1.6.0
+
+[1.5.1] https://github.com/lisplizards/vinland/compare/v1.5.0...v1.5.1
+
 [1.5.0] https://github.com/lisplizards/vinland/compare/v1.4.1...v1.5.0
 
 [1.4.1] https://github.com/lisplizards/vinland/compare/v1.4.0...v1.4.1
