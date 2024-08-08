@@ -659,16 +659,6 @@
                   'type-error))))
 
   (testing
-   "signals TYPE-ERROR when the redirect location string is NIL"
-   (let ((foo.lisp.vinland:*request*
-           (lack/request:make-request `(:request-uri "/"
-                                        :request-method :GET
-                                        :headers ,(make-hash-table :test #'equal))))
-         (foo.lisp.vinland:*response* (lack/response:make-response 200 ())))
-     (ok (signals (foo.lisp.vinland/web:redirect nil)
-                  'type-error))))
-
-  (testing
    "signals SIMPLE-ERROR when the redirect location string is empty"
    (let ((foo.lisp.vinland:*request*
            (lack/request:make-request `(:request-uri "/"

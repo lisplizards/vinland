@@ -20,7 +20,7 @@ location is provided by user input."))
 
 (define-condition redirect-not-allowed-error (error)
   ((status-code :initarg :status-code
-                :type integer)
+                :type fixnum)
    (location :initarg :location
              :type string))
   (:report (lambda (condition stream)
@@ -146,7 +146,7 @@ signals a CLIENT-ERROR with status 406: Not Acceptable."
                '((error 'foo.lisp.vinland/web:client-error :status-code 406)))))))
 
 (defmacro set-response-status (status)
-  "Sets the HTTP response status code, an integer or keyword.
+  "Sets the HTTP response status code, a fixnum or keyword.
 Returns NIL; a macro.
 
 Signals UNKNOWN-STATUS-ERROR when given a keyword that cannot be
@@ -161,7 +161,7 @@ or REDIRECT-BACK."
             (,gensym-status-code (etypecase ,gensym-status
                                    (keyword (foo.lisp.http-response:status-keyword-to-code
                                              ,gensym-status))
-                                   (integer ,gensym-status))))
+                                   (fixnum ,gensym-status))))
        (when (typep ,gensym-status-code
                     'foo.lisp.http-response:status-code-redirect)
          (error 'foo.lisp.vinland/web:redirect-not-allowed-error
@@ -303,7 +303,7 @@ by the route handler."
   `(throw 'foo.lisp.vinland/web:halt ,result))
 
 (defmacro client-error (status)
-  "Signals CLIENT-ERROR with STATUS, an integer or keyword representing
+  "Signals CLIENT-ERROR with STATUS, a fixnum or keyword representing
 a 4xx range HTTP response status code; a macro.
 
 Signals UNKNOWN-STATUS-ERROR when given a keyword that cannot be translated
@@ -312,12 +312,12 @@ to a known HTTP response status code.
 Signals TYPE-ERROR when given a non-4xx HTTP response status."
   (let ((status-code (etypecase status
                        (keyword (foo.lisp.http-response:status-keyword-to-code status))
-                       (integer status))))
+                       (fixnum status))))
     (check-type status-code foo.lisp.http-response:status-code-client-error)
     `(error 'foo.lisp.http-response:client-error :status-code ,status-code)))
 
 (defmacro server-error (status)
-  "Signals CLIENT-ERROR with STATUS, an integer or keyword representing
+  "Signals CLIENT-ERROR with STATUS, a fixnum or keyword representing
 a 5xx range HTTP response status code; a macro.
 
 Signals UNKNOWN-STATUS-ERROR when given a keyword that cannot be translated
@@ -326,7 +326,7 @@ to a known HTTP response status code.
 Signals TYPE-ERROR when given a non-5xx HTTP response status."
   (let ((status-code (etypecase status
                        (keyword (foo.lisp.http-response:status-keyword-to-code status))
-                       (integer status))))
+                       (fixnum status))))
     (check-type status-code foo.lisp.http-response:status-code-server-error)
     `(error 'foo.lisp.http-response:server-error :status-code ,status-code)))
 
@@ -339,7 +339,7 @@ Warning: never call with HTML from user input; *trusted* HTML only."
   `(foo.lisp.vinland/web:make-html-safe :value ,html))
 
 (defmacro render (&key (status 200) headers view args)
-  "Sets the response status code based on STATUS (integer or keyword), sets
+  "Sets the response status code based on STATUS (fixnum or keyword), sets
 response headers from HEADERS, a property list, and sets the response body to
 the result of calling function VIEW with arguments ARGS. Returns NIL; a macro.
 
@@ -347,7 +347,7 @@ Signals UNSAFE-REDIRECT-ERROR when given a redirect (3xx) response code, as
 redirects should be performed with either REDIRECT or REDIRECT-BACK."
   (let ((status-code (etypecase status
                        (keyword (foo.lisp.http-response:status-keyword-to-code status))
-                       (integer status))))
+                       (fixnum status))))
     (check-type status-code foo.lisp.http-response:status-code)
     `(foo.lisp.vinland/web:respond :status ,status-code
                                    :headers ,headers
@@ -356,8 +356,13 @@ redirects should be performed with either REDIRECT or REDIRECT-BACK."
 (defmacro route-url (route-name &rest kwargs &key &allow-other-keys)
   `(concatenate 'string foo.lisp.vinland:*origin* (route-path ,route-name ,@kwargs)))
 
+(declaim (ftype (function (&key (:status (or fixnum keyword))
+                                (:render function)
+                                (:headers list))
+                          null)
+                respond))
 (defun respond (&key (status 200) render headers)
-  "Sets the response status code based on STATUS (integer or keyword),
+  "Sets the response status code based on STATUS (fixnum or keyword),
 sets response headers from HEADERS, a property list, and sets the response
 body to the result of calling parameter RENDER, a function. Returns NIL;
 a function.
@@ -369,7 +374,7 @@ argument (see macro: RENDER).
 Signals REDIRECT-NOT-ALLOWED-ERROR when given a redirect (3xx) response code,
 as redirects should be performed with either REDIRECT or REDIRECT-BACK."
   (declare (optimize (speed 3) (safety 0) (debug 0))
-           (type (or integer keyword) status)
+           (type (or fixnum keyword) status)
            (type function render)
            (type list headers))
   (when headers
@@ -384,7 +389,7 @@ as redirects should be performed with either REDIRECT or REDIRECT-BACK."
                 (etypecase status
                   (keyword (foo.lisp.http-response:status-keyword-to-code
                             status))
-                  (integer status))))
+                  (fixnum status))))
           (typecase status-code
             (foo.lisp.http-response:status-code-redirect
              (error 'redirect-not-allowed-error
@@ -400,13 +405,19 @@ as redirects should be performed with either REDIRECT or REDIRECT-BACK."
         (funcall render))
   (values))
 
+(declaim (ftype (function ((simple-array character (*)) &key (:status (or fixnum keyword))
+                                                        (:headers list)
+                                                        (:flash list)
+                                                        (:allow-other-host boolean))
+                          null)
+                redirect))
 (defun redirect (location &key (status 302)
                             headers
                             flash
                             allow-other-host)
   "Redirects the user-agent to LOCATION; a function.
 
-Sets response status code based from STATUS (a 3xx range integer or equivalent
+Sets response status code based from STATUS (a 3xx range fixnum or equivalent
 keyword), sets response headers (except for Location) from HEADERS, a property
 list, and sets FOO.LISP.VINLAND:*FLASH* from FLASH, a property list containing
 arbitrary flash data.
@@ -415,10 +426,11 @@ arbitrary flash data.
 ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
   (declare (optimize (speed 3) (safety 0) (debug 0))
            (type (or null (simple-array character (*))) location)
-           (type (or integer keyword) status)
+           (type (or fixnum keyword) status)
+           (type (simple-array character (*)) location)
            (type list headers flash)
            (type boolean allow-other-host))
-  (check-type location string)
+  (check-type location (simple-array character (*)))
   (assert (> (length location) 0)
           nil
           "Empty redirect location")
@@ -428,7 +440,7 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
                   (keyword
                    (foo.lisp.http-response:status-keyword-to-code
                     status))
-                  (integer status))))
+                  (fixnum status))))
           (check-type status-code
                       foo.lisp.http-response:status-code-redirect)
           status-code))
@@ -464,6 +476,13 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
         "")
   (values))
 
+(declaim (ftype (function (&key (:status (or fixnum keyword))
+                                (:headers list)
+                                (:flash list)
+                                (:default-location (or null (simple-array character (*))))
+                                (:allow-other-host boolean))
+                          null)
+                redirect-back))
 (defun redirect-back (&key (status 302)
                         headers
                         flash
@@ -472,7 +491,7 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
   "Redirects the user-agent to the request Referer or, if none is present, falls
 back to DEFAULT-LOCATION; a function.
 
-Sets response status code based from STATUS (a 3xx range integer or equivalent
+Sets response status code based from STATUS (a 3xx range fixnum or equivalent
 keyword), sets response headers (except for Location) from HEADERS, a property
 list, and sets FOO.LISP.VINLAND:*FLASH* from FLASH, a property list containing
 arbitrary flash data.
@@ -480,7 +499,7 @@ arbitrary flash data.
 \"Open Redirect\" protection: when the location belongs to a different host and
 ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
   (declare (optimize (speed 3) (safety 0) (debug 0))
-           (type (or integer keyword) status)
+           (type (or fixnum keyword) status)
            (type list headers flash)
            (type (or null (simple-array character (*))) default-location)
            (type boolean allow-other-host))
@@ -494,8 +513,8 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
                   (keyword
                    (foo.lisp.http-response:status-keyword-to-code
                     status))
-                  (integer status))))
-          (declare (type integer status-code))
+                  (fixnum status))))
+          (declare (type fixnum status-code))
           (check-type status-code
                       foo.lisp.http-response:status-code-redirect)
           status-code))
