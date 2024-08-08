@@ -68,7 +68,7 @@ These features will be added in approximately the order listed above.
 
 * [alexandria](https://gitlab.common-lisp.net/alexandria/alexandria)
 * [jonathan](https://github.com/rudolph-miller/jonathan)
-* [rove](https://github.com/fukamachi/rove)
+* [parachute](https://github.com/Shinmera/parachute)
 
 ## Contributing
 

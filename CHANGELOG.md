@@ -1,3 +1,11 @@
+## [1.7.0] - 2024-08-07
+### Changed
+
+* Misc:
+  * Specify FIXNUM instead of INTEGER for in web.lisp for HTTP statuses
+  * Switch tests from Rove to Parachute
+  * Delete old HTTP response related tests (moved to foo.lisp.http-response)
+
 ## [1.6.0] - 2024-07-13
 ### Changed
 * Features:
@@ -127,6 +135,8 @@
 - Add response utilities
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
+
+[1.7.0] https://github.com/lisplizards/vinland/compare/v1.6.0...v1.7.0
 
 [1.6.0] https://github.com/lisplizards/vinland/compare/v1.5.1...v1.6.0
 

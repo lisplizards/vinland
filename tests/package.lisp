@@ -4,7 +4,7 @@
 (in-package #:cl-user)
 
 (defpackage #:foo.lisp.vinland/tests/params
-  (:use #:cl #:rove))
+  (:use #:cl #:parachute))
 
 (defpackage #:foo.lisp.vinland/tests/web
-  (:use #:cl #:rove))
+  (:use #:cl #:parachute))

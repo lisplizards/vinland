@@ -2,7 +2,7 @@
 ;; SPDX-License-Identifier: Apache-2.0
 
 (defsystem "foo.lisp.vinland"
-  :version "1.6.0"
+  :version "1.7.0"
   :author "John Newton"
   :license "Apache-2.0"
   :homepage "https://www.vinland.dev/"
@@ -47,11 +47,14 @@
   :depends-on ("alexandria"
                "foo.lisp.vinland"
                "jonathan"
-               "rove")
+               "parachute")
   :components ((:module "tests"
                 :components
                 ((:file "web" :depends-on ("package"))
                  (:file "params" :depends-on ("package"))
                  (:file "package"))))
   :description "Test system for foo.lisp.vinland"
-  :perform (test-op (op c) (symbol-call :rove :run c)))
+  :perform (test-op (op c)
+                    (progn
+                      (symbol-call :parachute :test :foo.lisp.vinland/tests/params)
+                      (symbol-call :parachute :test :foo.lisp.vinland/tests/web))))
