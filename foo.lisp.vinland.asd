@@ -2,7 +2,7 @@
 ;; SPDX-License-Identifier: Apache-2.0
 
 (defsystem "foo.lisp.vinland"
-  :version "1.7.1"
+  :version "1.8.0"
   :author "John Newton"
   :license "Apache-2.0"
   :homepage "https://www.vinland.dev/"
