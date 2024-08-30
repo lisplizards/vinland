@@ -1,3 +1,10 @@
+## [1.7.1] - 2024-08-30
+### Changed
+
+* Fix:
+  * Create shallow copy of response-headers in set-response-headers
+    - re-running test suite was causing append-response-headers tests to fail
+
 ## [1.7.0] - 2024-08-07
 ### Changed
 
@@ -135,6 +142,8 @@
 - Add response utilities
 - Add parameters handling generic functions
 - Add route/simple Raven sub-protocol handler
+
+[1.7.1] https://github.com/lisplizards/vinland/compare/v1.7.0...v1.7.1
 
 [1.7.0] https://github.com/lisplizards/vinland/compare/v1.6.0...v1.7.0
 

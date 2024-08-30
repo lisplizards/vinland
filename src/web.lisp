@@ -175,10 +175,14 @@ or REDIRECT-BACK."
 (defmacro set-response-headers (&rest headers)
   "Sets response headers from variadic argument HEADERS, a property list.
 Returns NIL; a macro."
-  `(loop for (key value) on ',headers by #'cddr
-         do (setf (getf (lack/response:response-headers foo.lisp.vinland:*response*)
-                        key)
-                  value)))
+  `(let ((response-headers (copy-list (lack/response:response-headers foo.lisp.vinland:*response*))))
+     (declare (type list response-headers))
+     (loop for (key value) on ',headers by #'cddr
+           do (setf (getf response-headers key)
+                    value))
+     (setf (lack/response:response-headers foo.lisp.vinland:*response*)
+           response-headers)
+     (values)))
 
 (defmacro append-response-headers (&rest headers)
   "Appends response headers from variadic header HEADERS, a property list.
