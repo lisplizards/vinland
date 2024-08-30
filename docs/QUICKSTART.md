@@ -18,7 +18,8 @@ Web-flavor example: "web" is the default, but for clarity here we explicitly spe
 (ql:quickload "foo.lisp.vinland.skeleton")
 
 (foo.lisp.vinland.skeleton:make-project
-  :name :web-demo
+  #p"~/quicklisp/local-projects/vinland-web-demo/"
+  :name "web-demo"
   :license "MIT"
   :author "Erik the Red"
   :flavor "web")
@@ -30,7 +31,7 @@ API-flavor example: specify a non-default name for the binary executable and rov
 (ql:quickload "foo.lisp.vinland.skeleton")
 
 (foo.lisp.vinland.skeleton:make-project
-  :name :api-demo
+  #p"~/quicklisp/local-projects/vinland-api-demo/"
   :program "api-server"
   :author "Bjarni Herjólfsson"
   :maintainer "Leif Erikson"

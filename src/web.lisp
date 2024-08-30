@@ -358,6 +358,8 @@ redirects should be performed with either REDIRECT or REDIRECT-BACK."
                                    :render #'(lambda () (apply ,view ,args)))))
 
 (defmacro route-url (route-name &rest kwargs &key &allow-other-keys)
+  "Returns a URL string for ROUTE-NAME by concatenating *ORIGIN* and the result
+of calling the ROUTE-PATH."
   `(concatenate 'string foo.lisp.vinland:*origin* (route-path ,route-name ,@kwargs)))
 
 (declaim (ftype (function (&key (:status (or fixnum keyword))

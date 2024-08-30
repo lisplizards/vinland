@@ -159,5 +159,5 @@
     (let ((name (getf params :name))
           (tab (string #\Tab)))
       (assert (not (null name)))
-      (format t "~%Grab a sword and shield: your saga starts here :)~%~%Run tests:~%~A(asdf:test-system :~A)~%~%Build static error pages:~%~A(~A/http-error:generate-static)~%~%If using Quicklisp, run the following from the REPL to load the system and start the server:~%~A(ql:quickload '(\"~A\" \"clack\"))~%~A(clack:clackup ~A/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil :debug nil)~%~%" tab name tab name tab name tab name))
+      (format t "~%Grab a sword and shield: your saga starts here :)~%~%Load system:~%~A(ql:quickload \"~A\")~%~%Run tests:~%~A(asdf:test-system :~A)~%~%Build static error pages:~%~A(~A/http-error:generate-static)~%~%If using Quicklisp, run the following from the REPL to load the system and start the server:~%~A(ql:quickload '(\"~A\" \"clack\"))~%~A(clack:clackup ~A/app:*app* :server :hunchentoot :port 5000 :use-default-middlewares nil :debug nil)~%~%" tab name tab name tab name tab name tab name))
     (values)))
