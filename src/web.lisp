@@ -564,3 +564,9 @@ ALLOW-OTHER-HOST is NIL, signals condition UNSAFE-REDIRECT-ERROR."
   (setf (lack/response:response-body foo.lisp.vinland:*response*)
         "")
   (values))
+
+(defun importmap (imports)
+  "Returns a JSON object string that can be used as the contents of an importmap script tag.
+IMPORTS, an association list, represents a list of imports (URLs or paths)."
+  (declare (type list imports))
+  (jojo:to-json (list (cons "imports" imports)) :from :alist))

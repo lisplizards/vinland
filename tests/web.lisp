@@ -843,6 +843,15 @@
                            :location)
                      "http://bar.example.org/")))))
 
+(define-test importmap
+    :parent web
+  (define-test "returns an importmap JSON object string"
+    (let* ((data '(("@acme/foo" . "/tmp/foo.js")
+                   ("@acme/bar" . "http://acme/example.com/cdn/bar.js")))
+           (result (foo.lisp.vinland/web:importmap data)))
+      (true (stringp result))
+      (true (equal result "{\"imports\":{\"@acme/foo\":\"/tmp/foo.js\",\"@acme/bar\":\"http://acme/example.com/cdn/bar.js\"}}")))))
+
 (defun widgets (env)
   (declare (ignore env))
   (let ((foo.lisp.vinland:*origin* "http://acme.example.com"))

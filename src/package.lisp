@@ -60,7 +60,8 @@
            #:make-html-safe)
   (:export #:respond
            #:redirect
-           #:redirect-back)
+           #:redirect-back
+           #:importmap)
   (:documentation "Exports macros and functions for HTTP related operations, intended to be called from route handlers."))
 
 (defpackage #:foo.lisp.vinland/handler/types

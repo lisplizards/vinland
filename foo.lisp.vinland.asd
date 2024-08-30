@@ -15,6 +15,7 @@
                "foo.lisp.params"
                "foo.lisp.raven"
                "foo.lisp.resource"
+               "jonathan"
                "lack-app-file"
                "lack-component"
                "lack-middleware-csrf"

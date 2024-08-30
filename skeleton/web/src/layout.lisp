@@ -1,6 +1,14 @@
 (in-package #:<% @var name %>/layout)
 
-(make-hash:install-hash-reader ())
+(defparameter *importmap*
+  (foo.lisp.vinland/web:importmap
+   '(<%- @unless skip-shoelace %>
+     ("@shoelace-style/form" . "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/utilities/form.js")
+     <%- @endunless %>
+     <%- @unless skip-hotwire %>
+     ("@hotwired/turbo" . "https://cdn.jsdelivr.net/npm/@hotwired/turbo@8/+esm")
+     ("@hotwired/stimulus" . "https://cdn.jsdelivr.net/npm/@hotwired/stimulus/+esm")
+     <%- @endunless %>)))
 
 (defmacro with-main-layout ((&key title
                                links
@@ -24,20 +32,7 @@
        ,@(when links
            (loop for link in links
                  collect link))
-       (:script :type "importmap"
-                (:raw ,(com.inuoe.jzon:stringify
-                         #{"imports" #{
-                           <%- @unless skip-shoelace %>
-                           "@shoelace-style/form"
-                           "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/utilities/form.js"
-                           <%- @endunless %>
-                           <%- @unless skip-hotwire %>
-                           "@hotwired/turbo" "https://cdn.jsdelivr.net/npm/@hotwired/turbo@8/+esm"
-                           "@hotwired/stimulus" "https://cdn.jsdelivr.net/npm/@hotwired/stimulus/+esm"
-                           <%- @endunless %>
-                         }}
-                        :stream nil
-                        :pretty nil)))
+       (:script :type "importmap" (:raw ,*importmap*))
        <%- @unless skip-shoelace %>
        (:script :type "module"
                 :src "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.15.0/cdn/shoelace-autoloader.js"

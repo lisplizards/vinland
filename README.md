@@ -58,6 +58,7 @@ These features will be added in approximately the order listed above.
 * [foo.lisp.params](https://github.com/lisplizards/params)
 * [foo.lisp.raven](https://github.com/lisplizards/raven)
 * [foo.lisp.resource](https://github.com/lisplizards/resource)
+* [jonathan](https://github.com/rudolph-miller/jonathan)
 * [lack-app-file](https://github.com/fukamachi/lack/blob/master/lack-app-file.asd)
 * [lack-component](https://github.com/fukamachi/lack/blob/master/lack-component.asd)
 * [lack-middleware-csrf](https://github.com/fukamachi/lack/blob/master/lack-middleware-csrf.asd)
